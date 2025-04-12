@@ -9,5 +9,6 @@ public class ScaleExample : MonoBehaviour
     {
         //TechTween.ScaleTo(gameObject, Scale, time).SetEaseType(easeTween);
         TechTween.ScaleFrom(gameObject, Scale, time).SetEaseType(easeTween);
+        TechTween.DelayCall(gameObject, 1, () => { Debug.Log(">>>"); });
     }
 }

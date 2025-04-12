@@ -15,21 +15,25 @@ namespace TechJuego
     public enum OperationType
     {
         None,
-        CallLimitedTypeInSeconds
+        Tween,
+        CallInSec,
     }
     public enum TweenType
     {
+        Delay,
         Value,
         Move,
         MoveLocal,
         Scale,
         Rotate,
+        RotateLocal,
         KeepRotate,
         KeepRotateLocal,
         TrigRotate,
         TrigScale,
         TrigMove,
         CanvasGroupAlpha,
+        SpriteRendererAlpha
     }
     public enum EaseTween
     {
@@ -48,19 +52,19 @@ namespace TechJuego
     }
     public class TweenUpdate
     {
+        public Action OnTweenStart;
+        public Action OnTweenComplete;
         public Action<float> onUpdateValue;
         public Action<int> onUpdateIntValue;
         public Action<Vector2> onUpdateVector2;
         public Action<Vector3> onUpdateVector3;
-        public Action OnTweenStart;
-        public Action OnTweenComplete;
         public void Reset()
         {
             OnTweenStart = null;
+            onUpdateValue = null;
             onUpdateVector2 = null;
             onUpdateVector3 = null;
             OnTweenComplete = null;
-            onUpdateValue = null;
             onUpdateIntValue = null;
         }
     }
@@ -86,18 +90,59 @@ namespace TechJuego
                 }
             }
         }
-
+        public static void UpdateLayputGroup(MonoBehaviour mono, HorizontalLayoutGroup hgroup)
+        {
+            UpdateLayout tween = new UpdateLayout();
+            tween.horizontalLayout = hgroup;
+            mono.RunCoroutine(tween.RunTween());
+        }
+        public static void UpdateLayputGroup(MonoBehaviour mono, VerticalLayoutGroup hgroup)
+        {
+            UpdateLayout tween = new UpdateLayout();
+            tween.verticalLayout = hgroup;
+            mono.RunCoroutine(tween.RunTween());
+        }
+        class FrameEnd
+        {
+            public Action OnComplete;
+            public FrameEnd() { }
+            public IEnumerator RunTween()
+            {
+                yield return new WaitForEndOfFrame();
+                OnComplete?.Invoke();
+            }
+        }
+        public static void CallAfterFrameEnd(MonoBehaviour mono, Action OnComplete)
+        {
+            FrameEnd tween = new FrameEnd();
+            tween.OnComplete = OnComplete;
+            mono.RunCoroutine(tween.RunTween());
+        }
+        public class DelayDetail
+        {
+            public float time;
+            public Action OnComplete;
+            public DelayDetail() { }
+            public IEnumerator RunTween()
+            {
+                yield return new WaitForSeconds(time);
+                OnComplete?.Invoke();
+            }
+        }
+        [HideInInspector]
         public TweenDetail tweenDetail;
         private void Update()
         {
             switch (tweenDetail.tweenType)
             {
                 case TweenType.CanvasGroupAlpha:
+                case TweenType.SpriteRendererAlpha:
                 case TweenType.Value:
                 case TweenType.Move:
                 case TweenType.MoveLocal:
                 case TweenType.Scale:
                 case TweenType.Rotate:
+                case TweenType.Delay:
                     tweenDetail.UpdateTween();
                     break;
                 case TweenType.KeepRotate:
@@ -111,11 +156,7 @@ namespace TechJuego
                     break;
             }
         }
-        public static TweenDetail ShakeCamera(GameObject gameObject,float shakeAmount)
-        {
-
-        }
-        public static TweenDetail CallNumberOfTimeInSeconds(GameObject gameObject, int count, Action onComplete)
+        public static TweenDetail CallInSec(GameObject gameObject, int count, Action onComplete)
         {
             TweenDetail tween = new TweenDetail();
             tween.reset();
@@ -126,51 +167,15 @@ namespace TechJuego
             tween.StartAction();
             return tween;
         }
-        public static void DelayCall(MonoBehaviour mono, float time, Action OnComplete)
+        public static void DelayCall(GameObject gameObject, float time, Action OnComplete)
         {
-            DelayDetail tween = new DelayDetail();
+            TweenDetail tween = new TweenDetail();
             tween.time = time;
-            tween.OnComplete = OnComplete;
-            mono.RunCoroutine(tween.RunTween());
-        }
-        public static void UpdateLayputGroup(MonoBehaviour mono, HorizontalLayoutGroup hgroup)
-        {
-            UpdateLayout tween = new UpdateLayout();
-            tween.horizontalLayout = hgroup;
-            mono.RunCoroutine(tween.RunTween());
-        }
-        public static void UpdateLayputGroup(MonoBehaviour mono, VerticalLayoutGroup hgroup)
-        {
-            UpdateLayout tween = new UpdateLayout();
-            tween.verticalLayout = hgroup;
-            mono.RunCoroutine(tween.RunTween());
-        }
-        public static void CallAfterFrameEnd(MonoBehaviour mono, Action OnComplete)
-        {
-            FrameEnd tween = new FrameEnd();
-            tween.OnComplete = OnComplete;
-            mono.RunCoroutine(tween.RunTween());
-        }
-        public class FrameEnd
-        {
-            public Action OnComplete;
-            public FrameEnd() { }
-            public IEnumerator RunTween()
-            {
-                yield return new WaitForEndOfFrame();
-                OnComplete?.Invoke();
-            }
-        }
-        public class DelayDetail
-        {
-            public float time;
-            public Action OnComplete;
-            public DelayDetail() { }
-            public IEnumerator RunTween()
-            {
-                yield return new WaitForSeconds(time);
-                OnComplete?.Invoke();
-            }
+            tween.action = OnComplete;
+            tween.tweenType = TweenType.Delay;
+            tween.techTween = gameObject.AddComponent<TechTween>();
+            tween.techTween.tweenDetail = tween;
+            tween.StartTween();
         }
         public static TweenDetail MoveToArc(GameObject gameObject, Vector3 startPoint, Vector3 endPoint, Vector3 arcHeight, float time)
         {
@@ -354,20 +359,7 @@ namespace TechJuego
             tween.StartTween();
             return tween;
         }
-        public static TweenDetail CanvasAlpha(CanvasGroup group, int to, float time)
-        {
-            TweenDetail tween = new TweenDetail();
-            tween.reset();
-            tween.canvasGroup = group;
-            tween.from = new Vector3(group.alpha, 0, 0);
-            tween.to = new Vector3(to, 0, 0);
-            tween.time = time;
-            tween.tweenType = TweenType.CanvasGroupAlpha;
-            tween.techTween = group.gameObject.AddComponent<TechTween>();
-            tween.techTween.tweenDetail = tween;
-            tween.StartTween();
-            return tween;
-        }
+      
         public static TweenDetail ValueTo(MonoBehaviour mono, Vector2 start, Vector2 to, float time)
         {
             TweenDetail tween = new TweenDetail();
@@ -426,38 +418,74 @@ namespace TechJuego
             tween.StartTween();
             return tween;
         }
+        public static TweenDetail CanvasAlpha(CanvasGroup group, float to, float time)
+        {
+            TweenDetail tween = new TweenDetail();
+            tween.reset();
+            tween.canvasGroup = group;
+            tween.from = new Vector3(group.alpha, 0, 0);
+            tween.to = new Vector3(to, 0, 0);
+            tween.time = time;
+            tween.tweenType = TweenType.CanvasGroupAlpha;
+            tween.techTween = group.gameObject.AddComponent<TechTween>();
+            tween.techTween.tweenDetail = tween;
+            tween.StartTween();
+            return tween;
+        }
+        public static TweenDetail SpriteRendererAlpha(SpriteRenderer sprite, float to, float time)
+        {
+            TweenDetail tween = new TweenDetail();
+            tween.reset();
+            tween.spriteRenderer = sprite;
+            tween.from = new Vector3(sprite.color.a, 0, 0);
+            tween.to = new Vector3(to, 0, 0);
+            tween.time = time;
+            tween.tweenType = TweenType.SpriteRendererAlpha;
+            tween.techTween = sprite.gameObject.AddComponent<TechTween>();
+            tween.techTween.tweenDetail = tween;
+            tween.StartTween();
+            return tween;
+        }
 
         [Serializable]
         public class TweenDetail
         {
-            public Action action;
-            public OperationType operationType = OperationType.None;
-            public TechTween techTween;
-            public CanvasGroup canvasGroup;
-            public Vector3 newVect;
-            public float delay;
+            public bool isLocal = false;
+            public bool isJumping = false;
+            public bool isLooping = false;
+            public bool isRunning = false;
+            public bool isPingPong = false;
+            public bool isReversing = false;
+
             public float time;
-            public Vector3 axis;
+            public float delay;
             public float speed;
-            public Transform trans;
-            public RectTransform rectTrans;
-            public Vector3 from;
-            public Vector3 arcHeight;
+            public float startTime;
+            
+            public int repeat = 1;
+            public int loopCount;
+
             public Vector3 to;
+            public Vector3 from;
+            public Vector3 axis;
+            public Vector3 newVect;
             public Vector3 frequency;
-            public EaseTween easeTween = EaseTween.Linear;
+            public Vector3 arcHeight;
+
+            public Transform trans;
+
             public TweenType tweenType;
+            public EaseTween easeTween = EaseTween.Linear;
+            public OperationType operationType = OperationType.None;
+
+            public Action action;
+            public TechTween techTween;
+            public SpriteRenderer spriteRenderer;
+            public CanvasGroup canvasGroup;
+            public RectTransform rectTrans;
             public AnimationCurve animationCurve;
             public TweenUpdate tweenUpdates = new TweenUpdate();
-            public int repeat = 1;
-            public bool isLooping;
-            public bool isPingPong = false;
-            private bool isReversing = false; 
-            public bool isLocal = false;
-            public bool isRunning;
-            public bool isJumping;
-            public float startTime;
-            public int loopCount;
+
             public TweenDetail() { }
             public void reset()
             {
@@ -473,7 +501,7 @@ namespace TechJuego
             public void StartAction()
             {
                 time = 0f;
-                operationType =  OperationType.CallLimitedTypeInSeconds;
+                operationType =  OperationType.CallInSec;
             }
             public void StartJump()
             {
@@ -513,8 +541,7 @@ namespace TechJuego
             {
                 switch (operationType)
                 {
-                    case OperationType.CallLimitedTypeInSeconds:
-                  
+                    case OperationType.CallInSec:
                         time += Time.deltaTime;
                         if (time >= (1f / (float)repeat))
                         {
@@ -557,14 +584,13 @@ namespace TechJuego
                     else
                     {
                         SetValues(1);
+                        action?.Invoke();
                         tweenUpdates.OnTweenComplete?.Invoke();
                         loopCount++;
-
                         if (isPingPong)
                         {
                             isReversing = !isReversing;
                         }
-
                         if (isLooping || loopCount < repeat)
                         {
                             startTime = Time.time; // Restart loop
@@ -838,6 +864,12 @@ namespace TechJuego
                         if (canvasGroup != null)
                         {
                             canvasGroup.alpha = newVect.x;
+                        }
+                        break;
+                    case TweenType.SpriteRendererAlpha:
+                        if(spriteRenderer != null)
+                        {
+                            spriteRenderer.color = new Color(spriteRenderer.color.r, spriteRenderer.color.g, spriteRenderer.color.b, newVect.x);
                         }
                         break;
                 }
