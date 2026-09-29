@@ -6,12 +6,12 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/TechJuego/3DFill/Scene/Splash.unity
-    guid: 60052ba51f2f8412ba76c580a895b398
+    path: Assets/TechJuego/DotDot/Scene/Splash.unity
+    guid: f209c46e36dc3d647b68f9bdf6eedb23
   - enabled: 1
-    path: Assets/TechJuego/3DFill/Scene/Menu.unity
-    guid: fca55615364bce345b27ad88791a00dd
+    path: Assets/TechJuego/DotDot/Scene/Menu.unity
+    guid: 7c26277bf0213b94bac358a32f24e60d
   - enabled: 1
-    path: Assets/TechJuego/TechTween/Scene/Game.unity
+    path: Assets/TechJuego/DotDot/Scene/Game.unity
     guid: d18d7174e37ed49d9890b58a9714ffa5
   m_configObjects: {}
