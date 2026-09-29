@@ -4,15 +4,20 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace TechJuego.TileMatchMania.Utils
+namespace TechJuego.Tween
 {
     public class TweenEvent
     {
         public delegate void OnAction(GameObject gameObject);
-        public static OnAction CancleTween;
+        public static OnAction CancelTween;
     }
     public static class CoroutineExtensions
     {
+        /// <summary>
+        /// Executes the R un Co ro ut in e operation.
+        /// </summary>
+        /// <param name="monoBehaviour"></param>
+        /// <param name="routine"></param>
         public static Coroutine RunCoroutine(this MonoBehaviour monoBehaviour, IEnumerator routine)
         {
             return monoBehaviour.StartCoroutine(routine);
@@ -82,7 +87,10 @@ namespace TechJuego.TileMatchMania.Utils
         public Action<int> onUpdateIntValue;
         public Action<Vector2> onUpdateVector2;
         public Action<Vector3> onUpdateVector3;
-        public void Reset()
+        /// <summary>
+        /// Resets the tween details.
+        /// </summary>
+        public void ResetTweenState()
         {
             OnTweenStart = null;
             onUpdateValue = null;
@@ -93,13 +101,14 @@ namespace TechJuego.TileMatchMania.Utils
         }
     }
   
+    // minimum required
     public class TechTween : MonoBehaviour
     {
         private void OnEnable()
         {
-            TweenEvent.CancleTween += TweenEvent_CancleTween;
+            TweenEvent.CancelTween += TweenEvent_CancelTween;
         }
-        private void TweenEvent_CancleTween(GameObject gameObject)
+        private void TweenEvent_CancelTween(GameObject gameObject)
         {
             if (gameObject == null) return;
             TechTween[] techTweens = gameObject.GetComponentsInChildren<TechTween>();
@@ -111,7 +120,7 @@ namespace TechJuego.TileMatchMania.Utils
         }
         private void OnDisable()
         {
-            TweenEvent.CancleTween -= TweenEvent_CancleTween;
+            TweenEvent.CancelTween -= TweenEvent_CancelTween;
         }
         class UpdateLayout
         {
@@ -119,6 +128,9 @@ namespace TechJuego.TileMatchMania.Utils
             public HorizontalLayoutGroup horizontalLayout;
             public VerticalLayoutGroup verticalLayout;
             public GridLayoutGroup gridLayoutGroup;
+            /// <summary>
+            /// Executes the R un Tw ee n operation.
+            /// </summary>
             public IEnumerator RunTween()
             {
                 yield return new WaitForEndOfFrame();
@@ -136,19 +148,34 @@ namespace TechJuego.TileMatchMania.Utils
                 }
             }
         }
-        public static void UpdateLayputGroup(MonoBehaviour mono, HorizontalLayoutGroup hgroup)
+        /// <summary>
+        /// Executes the U pd at eL ay pu tG ro up operation.
+        /// </summary>
+        /// <param name="mono"></param>
+        /// <param name="hgroup"></param>
+        public static void UpdateLayoutGroup(MonoBehaviour mono, HorizontalLayoutGroup hgroup)
         {
             UpdateLayout tween = new UpdateLayout();
             tween.horizontalLayout = hgroup;
             mono.RunCoroutine(tween.RunTween());
         }
-        public static void UpdateLayputGroup(MonoBehaviour mono, VerticalLayoutGroup hgroup)
+        /// <summary>
+        /// Executes the U pd at eL ay pu tG ro up operation.
+        /// </summary>
+        /// <param name="mono"></param>
+        /// <param name="hgroup"></param>
+        public static void UpdateLayoutGroup(MonoBehaviour mono, VerticalLayoutGroup hgroup)
         {
             UpdateLayout tween = new UpdateLayout();
             tween.verticalLayout = hgroup;
             mono.RunCoroutine(tween.RunTween());
         }
-        public static void UpdateLayputGroup(MonoBehaviour mono, GridLayoutGroup ggroup)
+        /// <summary>
+        /// Executes the U pd at eL ay pu tG ro up operation.
+        /// </summary>
+        /// <param name="mono"></param>
+        /// <param name="ggroup"></param>
+        public static void UpdateLayoutGroup(MonoBehaviour mono, GridLayoutGroup ggroup)
         {
             UpdateLayout tween = new UpdateLayout();
             tween.gridLayoutGroup = ggroup;
@@ -158,12 +185,20 @@ namespace TechJuego.TileMatchMania.Utils
         {
             public Action OnComplete;
             public FrameEnd() { }
+            /// <summary>
+            /// Executes the R un Tw ee n operation.
+            /// </summary>
             public IEnumerator RunTween()
             {
                 yield return new WaitForEndOfFrame();
                 OnComplete?.Invoke();
             }
         }
+        /// <summary>
+        /// Executes the C al lA ft er Fr am eE nd operation.
+        /// </summary>
+        /// <param name="mono"></param>
+        /// <param name="OnComplete"></param>
         public static void CallAfterFrameEnd(MonoBehaviour mono, Action OnComplete)
         {
             FrameEnd tween = new FrameEnd();
@@ -175,6 +210,9 @@ namespace TechJuego.TileMatchMania.Utils
             public float time;
             public Action OnComplete;
             public DelayDetail() { }
+            /// <summary>
+            /// Executes the R un Tw ee n operation.
+            /// </summary>
             public IEnumerator RunTween()
             {
                 yield return new WaitForSeconds(time);
@@ -185,6 +223,9 @@ namespace TechJuego.TileMatchMania.Utils
         public TweenDetail tweenDetail;
         public static bool IsPaused { get; private set; }
 
+        /// <summary>
+        /// Pauses the animation.
+        /// </summary>
         public static void PauseAllTweens()
         {
             IsPaused = true;
@@ -193,11 +234,14 @@ namespace TechJuego.TileMatchMania.Utils
             {
                 if (tween != null && tween.tweenDetail != null)
                 {
-                    tween.tweenDetail.Pause();
+                    tween.tweenDetail.PauseTween();
                 }
             }
         }
 
+        /// <summary>
+        /// Resumes the animation.
+        /// </summary>
         public static void ResumeAllTweens()
         {
             IsPaused = false;
@@ -206,8 +250,44 @@ namespace TechJuego.TileMatchMania.Utils
             {
                 if (tween != null && tween.tweenDetail != null)
                 {
-                    tween.tweenDetail.Resume();
+                    tween.tweenDetail.ResumeTween();
                 }
+            }
+        }
+
+        private void OnDrawGizmos()
+        {
+            if (tweenDetail == null || !tweenDetail.showGizmoPath) return;
+
+            Gizmos.color = tweenDetail.gizmoPathColor;
+
+            if (tweenDetail.tweenType == TweenType.MoveOnPoints && tweenDetail.pathPoints != null)
+            {
+                for (int i = 0; i < tweenDetail.pathPoints.Count - 1; i++)
+                {
+                    Gizmos.DrawLine(tweenDetail.pathPoints[i], tweenDetail.pathPoints[i + 1]);
+                }
+            }
+            else if (tweenDetail.isJumping)
+            {
+                int segments = 20;
+                Vector3 prevPos = tweenDetail.from;
+                for (int i = 1; i <= segments; i++)
+                {
+                    float progress = i / (float)segments;
+                    float parabola = 1.0f - 4.0f * (progress - 0.5f) * (progress - 0.5f);
+                    Vector3 nextPos = Vector3.Lerp(tweenDetail.from, tweenDetail.to, progress);
+                    nextPos.x += parabola * tweenDetail.arcHeight.x;
+                    nextPos.y += parabola * tweenDetail.arcHeight.y;
+                    nextPos.z += parabola * tweenDetail.arcHeight.z;
+                    
+                    Gizmos.DrawLine(prevPos, nextPos);
+                    prevPos = nextPos;
+                }
+            }
+            else if (tweenDetail.tweenType == TweenType.Move || tweenDetail.tweenType == TweenType.MoveLocal)
+            {
+                Gizmos.DrawLine(tweenDetail.from, tweenDetail.to);
             }
         }
 
@@ -250,11 +330,15 @@ namespace TechJuego.TileMatchMania.Utils
                 case TweenType.TrigMove:
                 case TweenType.TrigSinValue:
                 case TweenType.TrigMoveTransform:
-                    tweenDetail.UpdateTrignometric();
+                    tweenDetail.UpdateTrigonometric();
                     break;
             }
         }
-        public static void CancleTween(GameObject gameObject)
+        /// <summary>
+        /// Cancels the animation.
+        /// </summary>
+        /// <param name="gameObject"></param>
+        public static void CancelTween(GameObject gameObject)
         {
             if (gameObject == null) return;
             TechTween[] techTweens = gameObject.GetComponentsInChildren<TechTween>();
@@ -264,10 +348,16 @@ namespace TechJuego.TileMatchMania.Utils
                     Destroy(techTweens[i]);
             }
         }
+        /// <summary>
+        /// Executes the C al lI nS ec operation.
+        /// </summary>
+        /// <param name="gameObject"></param>
+        /// <param name="count"></param>
+        /// <param name="onComplete"></param>
         public static TweenDetail CallInSec(GameObject gameObject, int count, Action onComplete)
         {
             TweenDetail tween = new TweenDetail();
-            tween.reset();
+            tween.ResetTweenState();
             tween.repeat = Mathf.Max(1, count);
             tween.action = onComplete;
             tween.techTween = gameObject.AddComponent<TechTween>();
@@ -275,6 +365,12 @@ namespace TechJuego.TileMatchMania.Utils
             tween.StartAction();
             return tween;
         }
+        /// <summary>
+        /// Executes the D el ay Ca ll operation.
+        /// </summary>
+        /// <param name="gameObject"></param>
+        /// <param name="time"></param>
+        /// <param name="OnComplete"></param>
         public static void DelayCall(GameObject gameObject, float time, Action OnComplete)
         {
             TweenDetail tween = new TweenDetail();
@@ -285,11 +381,19 @@ namespace TechJuego.TileMatchMania.Utils
             tween.techTween.tweenDetail = tween;
             tween.StartTween();
         }
-        public static TweenDetail MoveToArc(GameObject gameObject, Vector3 startPoint, Vector3 endPoint, Vector3 arcHeight, float time)
+        /// <summary>
+        /// Moves the specified object.
+        /// </summary>
+        /// <param name="gameObject"></param>
+        /// <param name="startPoint"></param>
+        /// <param name="endPoint"></param>
+        /// <param name="arcHeight"></param>
+        /// <param name="time"></param>
+        public static TweenDetail AnimArcPosition(GameObject gameObject, Vector3 startPoint, Vector3 endPoint, Vector3 arcHeight, float time)
         {
             if (gameObject == null) return null;
             TweenDetail tween = new TweenDetail();
-            tween.reset();
+            tween.ResetTweenState();
             tween.trans = gameObject.transform;
             tween.from = startPoint;
             tween.to = endPoint;
@@ -300,11 +404,18 @@ namespace TechJuego.TileMatchMania.Utils
             tween.StartJump();
             return tween;
         }
-        public static TweenDetail MoveToArc(GameObject gameObject, Vector3 endPoint, Vector3 arcHeight, float time)
+        /// <summary>
+        /// Moves the specified object.
+        /// </summary>
+        /// <param name="gameObject"></param>
+        /// <param name="endPoint"></param>
+        /// <param name="arcHeight"></param>
+        /// <param name="time"></param>
+        public static TweenDetail AnimArcPosition(GameObject gameObject, Vector3 endPoint, Vector3 arcHeight, float time)
         {
             if (gameObject == null) return null;
             TweenDetail tween = new TweenDetail();
-            tween.reset();
+            tween.ResetTweenState();
             tween.trans = gameObject.transform;
             tween.from = gameObject.transform.position;
             tween.to = endPoint;
@@ -315,10 +426,17 @@ namespace TechJuego.TileMatchMania.Utils
             tween.StartJump();
             return tween;
         }
-        public static TweenDetail MoveToArc(RectTransform rect, Vector3 endPoint, Vector3 arcHeight, float time)
+        /// <summary>
+        /// Moves the specified object.
+        /// </summary>
+        /// <param name="rect"></param>
+        /// <param name="endPoint"></param>
+        /// <param name="arcHeight"></param>
+        /// <param name="time"></param>
+        public static TweenDetail AnimArcPosition(RectTransform rect, Vector3 endPoint, Vector3 arcHeight, float time)
         {
             TweenDetail tween = new TweenDetail();
-            tween.reset();
+            tween.ResetTweenState();
             tween.rectTrans = rect;
             tween.from = rect.anchoredPosition;
             tween.to = endPoint;
@@ -330,11 +448,18 @@ namespace TechJuego.TileMatchMania.Utils
             return tween;
         }
 
-        public static TweenDetail MoveOnPoints(GameObject gameObject, Vector3[] points, float time, bool loop = false)
+        /// <summary>
+        /// Moves the specified object.
+        /// </summary>
+        /// <param name="gameObject"></param>
+        /// <param name="points"></param>
+        /// <param name="time"></param>
+        /// <param name="loop"></param>
+        public static TweenDetail AnimPath(GameObject gameObject, Vector3[] points, float time, bool loop = false)
         {
             if (gameObject == null) return null;
             TweenDetail tween = new TweenDetail();
-            tween.reset();
+            tween.ResetTweenState();
             tween.trans = gameObject.transform;
             tween.from = gameObject.transform.position;
             tween.pathPoints = new List<Vector3>(points);
@@ -351,7 +476,14 @@ namespace TechJuego.TileMatchMania.Utils
             return tween;
         }
 
-        public static TweenDetail MoveRandomBezier(GameObject gameObject, Vector3 endPoint, float time, float randomness = 0.5f)
+        /// <summary>
+        /// Moves the specified object.
+        /// </summary>
+        /// <param name="gameObject"></param>
+        /// <param name="endPoint"></param>
+        /// <param name="time"></param>
+        /// <param name="randomness"></param>
+        public static TweenDetail AnimRandomBezier(GameObject gameObject, Vector3 endPoint, float time, float randomness = 0.5f)
         {
             if (gameObject == null) return null;
             Vector3 startPoint = gameObject.transform.position;
@@ -372,10 +504,17 @@ namespace TechJuego.TileMatchMania.Utils
                 pathPoints[i - 1] = position;
             }
             
-            return MoveOnPoints(gameObject, pathPoints, time, false);
+            return AnimPath(gameObject, pathPoints, time, false);
         }
 
-        public static TweenDetail MoveRandomBezier(RectTransform rect, Vector3 endPoint, float time, float randomness = 0.5f)
+        /// <summary>
+        /// Moves the specified object.
+        /// </summary>
+        /// <param name="rect"></param>
+        /// <param name="endPoint"></param>
+        /// <param name="time"></param>
+        /// <param name="randomness"></param>
+        public static TweenDetail AnimRandomBezier(RectTransform rect, Vector3 endPoint, float time, float randomness = 0.5f)
         {
             if (rect == null) return null;
             Vector3 startPoint = rect.position;
@@ -395,11 +534,11 @@ namespace TechJuego.TileMatchMania.Utils
                 pathPoints[i - 1] = position;
             }
             
-            return MoveOnPoints(rect, pathPoints, time, false);
+            return AnimPath(rect, pathPoints, time, false);
         }
 
         // ParticleSystem Overload - Moves INDIVIDUAL PARTICLES
-        public static TweenDetail MoveRandomBezier(ParticleSystem particle, Vector3 endPoint, float time, float randomness = 0.5f)
+        public static TweenDetail AnimRandomBezier(ParticleSystem particle, Vector3 endPoint, float time, float randomness = 0.5f)
         {
             if (particle == null) return null;
             
@@ -418,46 +557,88 @@ namespace TechJuego.TileMatchMania.Utils
         }
 
         // Transform Overload
-        public static TweenDetail MoveRandomBezier(Transform transform, Vector3 endPoint, float time, float randomness = 0.5f)
+        public static TweenDetail AnimRandomBezier(Transform transform, Vector3 endPoint, float time, float randomness = 0.5f)
         {
             if (transform == null) return null;
-            return MoveRandomBezier(transform.gameObject, endPoint, time, randomness);
+            return AnimRandomBezier(transform.gameObject, endPoint, time, randomness);
         }
 
-        public static TweenDetail MoveOnPoints(GameObject gameObject, List<Vector3> points, float time, bool loop = false)
+        /// <summary>
+        /// Moves the specified object.
+        /// </summary>
+        /// <param name="gameObject"></param>
+        /// <param name="points"></param>
+        /// <param name="time"></param>
+        /// <param name="loop"></param>
+        public static TweenDetail AnimPath(GameObject gameObject, List<Vector3> points, float time, bool loop = false)
         {
-            return MoveOnPoints(gameObject, points.ToArray(), time, loop);
+            return AnimPath(gameObject, points.ToArray(), time, loop);
         }
 
-        public static TweenDetail MoveOnPoints(GameObject gameObject, Transform[] points, float time, bool loop = false)
+        /// <summary>
+        /// Moves the specified object.
+        /// </summary>
+        /// <param name="gameObject"></param>
+        /// <param name="points"></param>
+        /// <param name="time"></param>
+        /// <param name="loop"></param>
+        public static TweenDetail AnimPath(GameObject gameObject, Transform[] points, float time, bool loop = false)
         {
             Vector3[] vectors = new Vector3[points.Length];
             for (int i = 0; i < points.Length; i++) vectors[i] = points[i].position;
-            return MoveOnPoints(gameObject, vectors, time, loop);
+            return AnimPath(gameObject, vectors, time, loop);
         }
 
-        public static TweenDetail MoveOnPoints(GameObject gameObject, List<Transform> points, float time, bool loop = false)
+        /// <summary>
+        /// Moves the specified object.
+        /// </summary>
+        /// <param name="gameObject"></param>
+        /// <param name="points"></param>
+        /// <param name="time"></param>
+        /// <param name="loop"></param>
+        public static TweenDetail AnimPath(GameObject gameObject, List<Transform> points, float time, bool loop = false)
         {
-            return MoveOnPoints(gameObject, points.ToArray(), time, loop);
+            return AnimPath(gameObject, points.ToArray(), time, loop);
         }
 
-        public static TweenDetail MoveOnPoints(GameObject gameObject, Vector2[] points, float time, bool loop = false)
+        /// <summary>
+        /// Moves the specified object.
+        /// </summary>
+        /// <param name="gameObject"></param>
+        /// <param name="points"></param>
+        /// <param name="time"></param>
+        /// <param name="loop"></param>
+        public static TweenDetail AnimPath(GameObject gameObject, Vector2[] points, float time, bool loop = false)
         {
             Vector3[] vectors = new Vector3[points.Length];
             for (int i = 0; i < points.Length; i++) vectors[i] = points[i];
-            return MoveOnPoints(gameObject, vectors, time, loop);
+            return AnimPath(gameObject, vectors, time, loop);
         }
 
-        public static TweenDetail MoveOnPoints(GameObject gameObject, List<Vector2> points, float time, bool loop = false)
+        /// <summary>
+        /// Moves the specified object.
+        /// </summary>
+        /// <param name="gameObject"></param>
+        /// <param name="points"></param>
+        /// <param name="time"></param>
+        /// <param name="loop"></param>
+        public static TweenDetail AnimPath(GameObject gameObject, List<Vector2> points, float time, bool loop = false)
         {
-            return MoveOnPoints(gameObject, points.ToArray(), time, loop);
+            return AnimPath(gameObject, points.ToArray(), time, loop);
         }
 
-        public static TweenDetail MoveOnPoints(RectTransform rect, Vector3[] points, float time, bool loop = false)
+        /// <summary>
+        /// Moves the specified object.
+        /// </summary>
+        /// <param name="rect"></param>
+        /// <param name="points"></param>
+        /// <param name="time"></param>
+        /// <param name="loop"></param>
+        public static TweenDetail AnimPath(RectTransform rect, Vector3[] points, float time, bool loop = false)
         {
             if (rect == null) return null;
             TweenDetail tween = new TweenDetail();
-            tween.reset();
+            tween.ResetTweenState();
             tween.rectTrans = rect;
             tween.from = rect.position;
             tween.pathPoints = new List<Vector3>(points);
@@ -474,35 +655,77 @@ namespace TechJuego.TileMatchMania.Utils
             return tween;
         }
 
-        public static TweenDetail MoveOnPoints(RectTransform rect, List<Vector3> points, float time, bool loop = false)
+        /// <summary>
+        /// Moves the specified object.
+        /// </summary>
+        /// <param name="rect"></param>
+        /// <param name="points"></param>
+        /// <param name="time"></param>
+        /// <param name="loop"></param>
+        public static TweenDetail AnimPath(RectTransform rect, List<Vector3> points, float time, bool loop = false)
         {
-            return MoveOnPoints(rect, points.ToArray(), time, loop);
+            return AnimPath(rect, points.ToArray(), time, loop);
         }
 
-        public static TweenDetail MoveOnPoints(RectTransform rect, Transform[] points, float time, bool loop = false)
+        /// <summary>
+        /// Moves the specified object.
+        /// </summary>
+        /// <param name="rect"></param>
+        /// <param name="points"></param>
+        /// <param name="time"></param>
+        /// <param name="loop"></param>
+        public static TweenDetail AnimPath(RectTransform rect, Transform[] points, float time, bool loop = false)
         {
             Vector3[] vectors = new Vector3[points.Length];
             for (int i = 0; i < points.Length; i++) vectors[i] = points[i].position;
-            return MoveOnPoints(rect, vectors, time, loop);
+            return AnimPath(rect, vectors, time, loop);
         }
 
-        public static TweenDetail MoveOnPoints(RectTransform rect, List<Transform> points, float time, bool loop = false)
+        /// <summary>
+        /// Moves the specified object.
+        /// </summary>
+        /// <param name="rect"></param>
+        /// <param name="points"></param>
+        /// <param name="time"></param>
+        /// <param name="loop"></param>
+        public static TweenDetail AnimPath(RectTransform rect, List<Transform> points, float time, bool loop = false)
         {
-            return MoveOnPoints(rect, points.ToArray(), time, loop);
+            return AnimPath(rect, points.ToArray(), time, loop);
         }
 
-        public static TweenDetail MoveOnPoints(RectTransform rect, Vector2[] points, float time, bool loop = false)
+        /// <summary>
+        /// Moves the specified object.
+        /// </summary>
+        /// <param name="rect"></param>
+        /// <param name="points"></param>
+        /// <param name="time"></param>
+        /// <param name="loop"></param>
+        public static TweenDetail AnimPath(RectTransform rect, Vector2[] points, float time, bool loop = false)
         {
             Vector3[] vectors = new Vector3[points.Length];
             for (int i = 0; i < points.Length; i++) vectors[i] = points[i];
-            return MoveOnPoints(rect, vectors, time, loop);
+            return AnimPath(rect, vectors, time, loop);
         }
 
-        public static TweenDetail MoveOnPoints(RectTransform rect, List<Vector2> points, float time, bool loop = false)
+        /// <summary>
+        /// Moves the specified object.
+        /// </summary>
+        /// <param name="rect"></param>
+        /// <param name="points"></param>
+        /// <param name="time"></param>
+        /// <param name="loop"></param>
+        public static TweenDetail AnimPath(RectTransform rect, List<Vector2> points, float time, bool loop = false)
         {
-            return MoveOnPoints(rect, points.ToArray(), time, loop);
+            return AnimPath(rect, points.ToArray(), time, loop);
         }
 
+        /// <summary>
+        /// Executes the C al cu la te Pa th Ti me operation.
+        /// </summary>
+        /// <param name="start"></param>
+        /// <param name="points"></param>
+        /// <param name="speed"></param>
+        /// <param name="loop"></param>
         public static float CalculatePathTime(Vector3 start, Vector3[] points, float speed, bool loop)
         {
             float distance = 0f;
@@ -519,85 +742,176 @@ namespace TechJuego.TileMatchMania.Utils
             return speed > 0 ? distance / speed : 0;
         }
 
-        public static TweenDetail MoveOnPointsSpeed(GameObject gameObject, Vector3[] points, float speed, bool loop = false)
+        /// <summary>
+        /// Moves the specified object.
+        /// </summary>
+        /// <param name="gameObject"></param>
+        /// <param name="points"></param>
+        /// <param name="speed"></param>
+        /// <param name="loop"></param>
+        public static TweenDetail AnimPathSpeed(GameObject gameObject, Vector3[] points, float speed, bool loop = false)
         {
             if (gameObject == null) return null;
             float time = CalculatePathTime(gameObject.transform.position, points, speed, loop);
-            return MoveOnPoints(gameObject, points, time, loop);
+            return AnimPath(gameObject, points, time, loop);
         }
 
-        public static TweenDetail MoveOnPointsSpeed(GameObject gameObject, List<Vector3> points, float speed, bool loop = false)
+        /// <summary>
+        /// Moves the specified object.
+        /// </summary>
+        /// <param name="gameObject"></param>
+        /// <param name="points"></param>
+        /// <param name="speed"></param>
+        /// <param name="loop"></param>
+        public static TweenDetail AnimPathSpeed(GameObject gameObject, List<Vector3> points, float speed, bool loop = false)
         {
             if (gameObject == null) return null;
             float time = CalculatePathTime(gameObject.transform.position, points.ToArray(), speed, loop);
-            return MoveOnPoints(gameObject, points, time, loop);
+            return AnimPath(gameObject, points, time, loop);
         }
 
-        public static TweenDetail MoveOnPointsSpeed(GameObject gameObject, Transform[] points, float speed, bool loop = false)
+        /// <summary>
+        /// Moves the specified object.
+        /// </summary>
+        /// <param name="gameObject"></param>
+        /// <param name="points"></param>
+        /// <param name="speed"></param>
+        /// <param name="loop"></param>
+        public static TweenDetail AnimPathSpeed(GameObject gameObject, Transform[] points, float speed, bool loop = false)
         {
             Vector3[] vectors = new Vector3[points.Length];
             for (int i = 0; i < points.Length; i++) vectors[i] = points[i].position;
-            return MoveOnPointsSpeed(gameObject, vectors, speed, loop);
+            return AnimPathSpeed(gameObject, vectors, speed, loop);
         }
 
-        public static TweenDetail MoveOnPointsSpeed(GameObject gameObject, List<Transform> points, float speed, bool loop = false)
+        /// <summary>
+        /// Moves the specified object.
+        /// </summary>
+        /// <param name="gameObject"></param>
+        /// <param name="points"></param>
+        /// <param name="speed"></param>
+        /// <param name="loop"></param>
+        public static TweenDetail AnimPathSpeed(GameObject gameObject, List<Transform> points, float speed, bool loop = false)
         {
-            return MoveOnPointsSpeed(gameObject, points.ToArray(), speed, loop);
+            return AnimPathSpeed(gameObject, points.ToArray(), speed, loop);
         }
 
-        public static TweenDetail MoveOnPointsSpeed(GameObject gameObject, Vector2[] points, float speed, bool loop = false)
+        /// <summary>
+        /// Moves the specified object.
+        /// </summary>
+        /// <param name="gameObject"></param>
+        /// <param name="points"></param>
+        /// <param name="speed"></param>
+        /// <param name="loop"></param>
+        public static TweenDetail AnimPathSpeed(GameObject gameObject, Vector2[] points, float speed, bool loop = false)
         {
             Vector3[] vectors = new Vector3[points.Length];
             for (int i = 0; i < points.Length; i++) vectors[i] = points[i];
-            return MoveOnPointsSpeed(gameObject, vectors, speed, loop);
+            return AnimPathSpeed(gameObject, vectors, speed, loop);
         }
 
-        public static TweenDetail MoveOnPointsSpeed(GameObject gameObject, List<Vector2> points, float speed, bool loop = false)
+        /// <summary>
+        /// Moves the specified object.
+        /// </summary>
+        /// <param name="gameObject"></param>
+        /// <param name="points"></param>
+        /// <param name="speed"></param>
+        /// <param name="loop"></param>
+        public static TweenDetail AnimPathSpeed(GameObject gameObject, List<Vector2> points, float speed, bool loop = false)
         {
-            return MoveOnPointsSpeed(gameObject, points.ToArray(), speed, loop);
+            return AnimPathSpeed(gameObject, points.ToArray(), speed, loop);
         }
 
-        public static TweenDetail MoveOnPointsSpeed(RectTransform rect, Vector3[] points, float speed, bool loop = false)
+        /// <summary>
+        /// Moves the specified object.
+        /// </summary>
+        /// <param name="rect"></param>
+        /// <param name="points"></param>
+        /// <param name="speed"></param>
+        /// <param name="loop"></param>
+        public static TweenDetail AnimPathSpeed(RectTransform rect, Vector3[] points, float speed, bool loop = false)
         {
             if (rect == null) return null;
             float time = CalculatePathTime(rect.position, points, speed, loop);
-            return MoveOnPoints(rect, points, time, loop);
+            return AnimPath(rect, points, time, loop);
         }
 
-        public static TweenDetail MoveOnPointsSpeed(RectTransform rect, List<Vector3> points, float speed, bool loop = false)
+        /// <summary>
+        /// Moves the specified object.
+        /// </summary>
+        /// <param name="rect"></param>
+        /// <param name="points"></param>
+        /// <param name="speed"></param>
+        /// <param name="loop"></param>
+        public static TweenDetail AnimPathSpeed(RectTransform rect, List<Vector3> points, float speed, bool loop = false)
         {
             if (rect == null) return null;
             float time = CalculatePathTime(rect.position, points.ToArray(), speed, loop);
-            return MoveOnPoints(rect, points, time, loop);
+            return AnimPath(rect, points, time, loop);
         }
 
-        public static TweenDetail MoveOnPointsSpeed(RectTransform rect, Transform[] points, float speed, bool loop = false)
+        /// <summary>
+        /// Moves the specified object.
+        /// </summary>
+        /// <param name="rect"></param>
+        /// <param name="points"></param>
+        /// <param name="speed"></param>
+        /// <param name="loop"></param>
+        public static TweenDetail AnimPathSpeed(RectTransform rect, Transform[] points, float speed, bool loop = false)
         {
             Vector3[] vectors = new Vector3[points.Length];
             for (int i = 0; i < points.Length; i++) vectors[i] = points[i].position;
-            return MoveOnPointsSpeed(rect, vectors, speed, loop);
+            return AnimPathSpeed(rect, vectors, speed, loop);
         }
 
-        public static TweenDetail MoveOnPointsSpeed(RectTransform rect, List<Transform> points, float speed, bool loop = false)
+        /// <summary>
+        /// Moves the specified object.
+        /// </summary>
+        /// <param name="rect"></param>
+        /// <param name="points"></param>
+        /// <param name="speed"></param>
+        /// <param name="loop"></param>
+        public static TweenDetail AnimPathSpeed(RectTransform rect, List<Transform> points, float speed, bool loop = false)
         {
-            return MoveOnPointsSpeed(rect, points.ToArray(), speed, loop);
+            return AnimPathSpeed(rect, points.ToArray(), speed, loop);
         }
 
-        public static TweenDetail MoveOnPointsSpeed(RectTransform rect, Vector2[] points, float speed, bool loop = false)
+        /// <summary>
+        /// Moves the specified object.
+        /// </summary>
+        /// <param name="rect"></param>
+        /// <param name="points"></param>
+        /// <param name="speed"></param>
+        /// <param name="loop"></param>
+        public static TweenDetail AnimPathSpeed(RectTransform rect, Vector2[] points, float speed, bool loop = false)
         {
             Vector3[] vectors = new Vector3[points.Length];
             for (int i = 0; i < points.Length; i++) vectors[i] = points[i];
-            return MoveOnPointsSpeed(rect, vectors, speed, loop);
+            return AnimPathSpeed(rect, vectors, speed, loop);
         }
 
-        public static TweenDetail MoveOnPointsSpeed(RectTransform rect, List<Vector2> points, float speed, bool loop = false)
+        /// <summary>
+        /// Moves the specified object.
+        /// </summary>
+        /// <param name="rect"></param>
+        /// <param name="points"></param>
+        /// <param name="speed"></param>
+        /// <param name="loop"></param>
+        public static TweenDetail AnimPathSpeed(RectTransform rect, List<Vector2> points, float speed, bool loop = false)
         {
-            return MoveOnPointsSpeed(rect, points.ToArray(), speed, loop);
+            return AnimPathSpeed(rect, points.ToArray(), speed, loop);
         }
-        public static TweenDetail MoveTo(GameObject gameObject, Vector3 to, float time, AnimationCurve animationCurve)
+        /// <summary>
+        /// Moves the specified object.
+        /// </summary>
+        /// <param name="gameObject"></param>
+        /// <param name="to"></param>
+        /// <param name="time"></param>
+        /// <param name="animationCurve"></param>
+        public static TweenDetail AnimPosition(GameObject gameObject, Vector3 to, float time, AnimationCurve animationCurve)
         {
             TweenDetail tween = new TweenDetail();
-            tween.reset();
+            tween.ResetTweenState();
             tween.trans = gameObject.transform;
             tween.from = gameObject.transform.position;
             tween.to = to;
@@ -609,10 +923,16 @@ namespace TechJuego.TileMatchMania.Utils
             tween.StartTween();
             return tween;
         }
-        public static TweenDetail MoveTo(GameObject gameObject, Vector3 to, float time)
+        /// <summary>
+        /// Moves the specified object.
+        /// </summary>
+        /// <param name="gameObject"></param>
+        /// <param name="to"></param>
+        /// <param name="time"></param>
+        public static TweenDetail AnimPosition(GameObject gameObject, Vector3 to, float time)
         {
             TweenDetail tween = new TweenDetail();
-            tween.reset();
+            tween.ResetTweenState();
             tween.trans = gameObject.transform;
             tween.from = gameObject.transform.position;
             tween.to = to;
@@ -623,10 +943,16 @@ namespace TechJuego.TileMatchMania.Utils
             tween.StartTween();
             return tween;
         }
-        public static TweenDetail MoveTo(RectTransform rect, Vector3 to, float time)
+        /// <summary>
+        /// Moves the specified object.
+        /// </summary>
+        /// <param name="rect"></param>
+        /// <param name="to"></param>
+        /// <param name="time"></param>
+        public static TweenDetail AnimPosition(RectTransform rect, Vector3 to, float time)
         {
             TweenDetail tween = new TweenDetail();
-            tween.reset();
+            tween.ResetTweenState();
             tween.rectTrans = rect;
             tween.from = rect.position;
             tween.to = to;
@@ -637,10 +963,16 @@ namespace TechJuego.TileMatchMania.Utils
             tween.StartTween();
             return tween;
         }
-        public static TweenDetail Rotate(GameObject gameObject, Vector3 axis, float speed)
+        /// <summary>
+        /// Rotates the specified object.
+        /// </summary>
+        /// <param name="gameObject"></param>
+        /// <param name="axis"></param>
+        /// <param name="speed"></param>
+        public static TweenDetail AnimContinuousRotation(GameObject gameObject, Vector3 axis, float speed)
         {
             TweenDetail tween = new TweenDetail();
-            tween.reset();
+            tween.ResetTweenState();
             tween.trans = gameObject.transform;
             tween.axis = axis;
             tween.speed = speed;
@@ -651,10 +983,16 @@ namespace TechJuego.TileMatchMania.Utils
             return tween;
         }
 
-        public static TweenDetail TrignometricRotate(GameObject gameObject, Vector3 angleLimit, Vector3 frequency)
+        /// <summary>
+        /// Applies a trigonometric animation.
+        /// </summary>
+        /// <param name="gameObject"></param>
+        /// <param name="angleLimit"></param>
+        /// <param name="frequency"></param>
+        public static TweenDetail AnimTrigRotation(GameObject gameObject, Vector3 angleLimit, Vector3 frequency)
         {
             TweenDetail tween = new TweenDetail();
-            tween.reset();
+            tween.ResetTweenState();
             tween.trans = gameObject.transform;
             tween.from = gameObject.transform.eulerAngles;
             tween.to = angleLimit;
@@ -663,13 +1001,19 @@ namespace TechJuego.TileMatchMania.Utils
             tween.tweenType = TweenType.TrigRotate;
             tween.techTween = gameObject.AddComponent<TechTween>();
             tween.techTween.tweenDetail = tween;
-            tween.StartTrignometroc();
+            tween.StartTrigonometric();
             return tween;
         }
-        public static TweenDetail TrignometricScale(GameObject gameObject, Vector3 scaleLimit, Vector3 frequency)
+        /// <summary>
+        /// Applies a trigonometric animation.
+        /// </summary>
+        /// <param name="gameObject"></param>
+        /// <param name="scaleLimit"></param>
+        /// <param name="frequency"></param>
+        public static TweenDetail AnimTrigScale(GameObject gameObject, Vector3 scaleLimit, Vector3 frequency)
         {
             TweenDetail tween = new TweenDetail();
-            tween.reset();
+            tween.ResetTweenState();
             tween.trans = gameObject.transform;
             tween.from = gameObject.transform.localScale;
             tween.to = scaleLimit;
@@ -677,13 +1021,19 @@ namespace TechJuego.TileMatchMania.Utils
             tween.tweenType = TweenType.TrigScale;
             tween.techTween = gameObject.AddComponent<TechTween>();
             tween.techTween.tweenDetail = tween;
-            tween.StartTrignometroc();
+            tween.StartTrigonometric();
             return tween;
         }
-        public static TweenDetail TrignometricMove(GameObject gameObject, Vector3 moveLimit, Vector3 frequency)
+        /// <summary>
+        /// Applies a trigonometric animation.
+        /// </summary>
+        /// <param name="gameObject"></param>
+        /// <param name="moveLimit"></param>
+        /// <param name="frequency"></param>
+        public static TweenDetail AnimTrigPosition(GameObject gameObject, Vector3 moveLimit, Vector3 frequency)
         {
             TweenDetail tween = new TweenDetail();
-            tween.reset();
+            tween.ResetTweenState();
             tween.trans = gameObject.transform;
             tween.from = gameObject.transform.localPosition;
             tween.to = moveLimit;
@@ -691,13 +1041,22 @@ namespace TechJuego.TileMatchMania.Utils
             tween.tweenType = TweenType.TrigMove;
             tween.techTween = gameObject.AddComponent<TechTween>();
             tween.techTween.tweenDetail = tween;
-            tween.StartTrignometroc();
+            tween.StartTrigonometric();
             return tween;
         }
-        public static TweenDetail TrignometricMoveTransform(GameObject gameObject, Transform from, Transform to, float frequency, float time, bool isContinuous = false)
+        /// <summary>
+        /// Applies a trigonometric animation.
+        /// </summary>
+        /// <param name="gameObject"></param>
+        /// <param name="from"></param>
+        /// <param name="to"></param>
+        /// <param name="frequency"></param>
+        /// <param name="time"></param>
+        /// <param name="isContinuous"></param>
+        public static TweenDetail AnimTrigPositionTransform(GameObject gameObject, Transform from, Transform to, float frequency, float time, bool isContinuous = false)
         {
             TweenDetail tween = new TweenDetail();
-            tween.reset();
+            tween.ResetTweenState();
             tween.trans = gameObject.transform;
             tween.transformFrom = from;
             tween.transformTo = to;
@@ -707,7 +1066,7 @@ namespace TechJuego.TileMatchMania.Utils
             tween.tweenType = TweenType.TrigMoveTransform;
             tween.techTween = gameObject.AddComponent<TechTween>();
             tween.techTween.tweenDetail = tween;
-            tween.StartTrignometroc();
+            tween.StartTrigonometric();
             return tween;
         }
         /// <summary>
@@ -719,10 +1078,10 @@ namespace TechJuego.TileMatchMania.Utils
         /// <param name="frequency"></param>
         /// <param name="delay"></param>
         /// <returns></returns>
-        public static TweenDetail TrignometricValue(GameObject gameObject, float start, float end, float frequency)
+        public static TweenDetail AnimTrigFloat(GameObject gameObject, float start, float end, float frequency)
         {
             TweenDetail tween = new TweenDetail();
-            tween.reset();
+            tween.ResetTweenState();
             tween.trans = gameObject.transform;
             tween.from = new Vector3(start, 0, 0);
             tween.to = new Vector3(end, 0, 0);
@@ -730,13 +1089,19 @@ namespace TechJuego.TileMatchMania.Utils
             tween.tweenType = TweenType.TrigSinValue;
             tween.techTween = gameObject.AddComponent<TechTween>();
             tween.techTween.tweenDetail = tween;
-            tween.StartTrignometroc();
+            tween.StartTrigonometric();
             return tween;
         }
-        public static TweenDetail RotateTo(GameObject gameObject, Vector3 to, float time)
+        /// <summary>
+        /// Rotates the specified object.
+        /// </summary>
+        /// <param name="gameObject"></param>
+        /// <param name="to"></param>
+        /// <param name="time"></param>
+        public static TweenDetail AnimRotation(GameObject gameObject, Vector3 to, float time)
         {
             TweenDetail tween = new TweenDetail();
-            tween.reset();
+            tween.ResetTweenState();
             tween.trans = gameObject.transform;
             tween.from = gameObject.transform.eulerAngles;
             tween.to = to;
@@ -747,10 +1112,16 @@ namespace TechJuego.TileMatchMania.Utils
             tween.StartTween();
             return tween;
         }
-        public static TweenDetail ScaleTo(GameObject gameObject, Vector3 to, float time)
+        /// <summary>
+        /// Scales the specified object.
+        /// </summary>
+        /// <param name="gameObject"></param>
+        /// <param name="to"></param>
+        /// <param name="time"></param>
+        public static TweenDetail AnimScale(GameObject gameObject, Vector3 to, float time)
         {
             TweenDetail tween = new TweenDetail();
-            tween.reset();
+            tween.ResetTweenState();
             tween.trans = gameObject.transform;
             tween.from = gameObject.transform.localScale;
             tween.to = to;
@@ -761,10 +1132,16 @@ namespace TechJuego.TileMatchMania.Utils
             tween.StartTween();
             return tween;
         }
-        public static TweenDetail ScaleFrom(GameObject gameObject, Vector3 from, float time)
+        /// <summary>
+        /// Scales the specified object.
+        /// </summary>
+        /// <param name="gameObject"></param>
+        /// <param name="from"></param>
+        /// <param name="time"></param>
+        public static TweenDetail AnimScaleFrom(GameObject gameObject, Vector3 from, float time)
         {
             TweenDetail tween = new TweenDetail();
-            tween.reset();
+            tween.ResetTweenState();
             tween.trans = gameObject.transform;
             tween.from = from;
             tween.to = gameObject.transform.localScale;
@@ -776,10 +1153,16 @@ namespace TechJuego.TileMatchMania.Utils
             return tween;
         }
 
-        public static TweenDetail PunchScale(GameObject gameObject, Vector3 amount, float time)
+        /// <summary>
+        /// Applies a punch effect to the specified object.
+        /// </summary>
+        /// <param name="gameObject"></param>
+        /// <param name="amount"></param>
+        /// <param name="time"></param>
+        public static TweenDetail AnimPunchScale(GameObject gameObject, Vector3 amount, float time)
         {
             TweenDetail tween = new TweenDetail();
-            tween.reset();
+            tween.ResetTweenState();
             tween.trans = gameObject.transform;
             tween.from = gameObject.transform.localScale;
             tween.to = amount;
@@ -791,10 +1174,16 @@ namespace TechJuego.TileMatchMania.Utils
             return tween;
         }
 
-        public static TweenDetail PunchPosition(GameObject gameObject, Vector3 amount, float time)
+        /// <summary>
+        /// Applies a punch effect to the specified object.
+        /// </summary>
+        /// <param name="gameObject"></param>
+        /// <param name="amount"></param>
+        /// <param name="time"></param>
+        public static TweenDetail AnimPunchPosition(GameObject gameObject, Vector3 amount, float time)
         {
             TweenDetail tween = new TweenDetail();
-            tween.reset();
+            tween.ResetTweenState();
             tween.trans = gameObject.transform;
             tween.from = gameObject.transform.position;
             tween.to = amount;
@@ -806,10 +1195,16 @@ namespace TechJuego.TileMatchMania.Utils
             return tween;
         }
 
-        public static TweenDetail PunchPositionLocal(GameObject gameObject, Vector3 amount, float time)
+        /// <summary>
+        /// Applies a punch effect to the specified object.
+        /// </summary>
+        /// <param name="gameObject"></param>
+        /// <param name="amount"></param>
+        /// <param name="time"></param>
+        public static TweenDetail AnimPunchLocalPosition(GameObject gameObject, Vector3 amount, float time)
         {
             TweenDetail tween = new TweenDetail();
-            tween.reset();
+            tween.ResetTweenState();
             tween.trans = gameObject.transform;
             tween.from = gameObject.transform.localPosition;
             tween.to = amount;
@@ -821,40 +1216,76 @@ namespace TechJuego.TileMatchMania.Utils
             return tween;
         }
 
-        public static TweenDetail MoveAdd(GameObject gameObject, Vector3 amount, float time)
+        /// <summary>
+        /// Moves the specified object.
+        /// </summary>
+        /// <param name="gameObject"></param>
+        /// <param name="amount"></param>
+        /// <param name="time"></param>
+        public static TweenDetail AnimPositionAdd(GameObject gameObject, Vector3 amount, float time)
         {
-            return MoveTo(gameObject, gameObject.transform.position + amount, time);
+            return AnimPosition(gameObject, gameObject.transform.position + amount, time);
         }
 
-        public static TweenDetail MoveBy(GameObject gameObject, Vector3 amount, float time)
+        /// <summary>
+        /// Moves the specified object.
+        /// </summary>
+        /// <param name="gameObject"></param>
+        /// <param name="amount"></param>
+        /// <param name="time"></param>
+        public static TweenDetail AnimPositionBy(GameObject gameObject, Vector3 amount, float time)
         {
-            return MoveTo(gameObject, gameObject.transform.position + amount, time);
+            return AnimPosition(gameObject, gameObject.transform.position + amount, time);
         }
 
-        public static TweenDetail ScaleAdd(GameObject gameObject, Vector3 amount, float time)
+        /// <summary>
+        /// Scales the specified object.
+        /// </summary>
+        /// <param name="gameObject"></param>
+        /// <param name="amount"></param>
+        /// <param name="time"></param>
+        public static TweenDetail AnimScaleAdd(GameObject gameObject, Vector3 amount, float time)
         {
-            return ScaleTo(gameObject, gameObject.transform.localScale + amount, time);
+            return AnimScale(gameObject, gameObject.transform.localScale + amount, time);
         }
 
-        public static TweenDetail ScaleBy(GameObject gameObject, Vector3 amount, float time)
+        /// <summary>
+        /// Scales the specified object.
+        /// </summary>
+        /// <param name="gameObject"></param>
+        /// <param name="amount"></param>
+        /// <param name="time"></param>
+        public static TweenDetail AnimScaleBy(GameObject gameObject, Vector3 amount, float time)
         {
             Vector3 targetScale = new Vector3(
                 gameObject.transform.localScale.x * amount.x,
                 gameObject.transform.localScale.y * amount.y,
                 gameObject.transform.localScale.z * amount.z
             );
-            return ScaleTo(gameObject, targetScale, time);
+            return AnimScale(gameObject, targetScale, time);
         }
 
-        public static TweenDetail RotateAdd(GameObject gameObject, Vector3 amount, float time)
+        /// <summary>
+        /// Rotates the specified object.
+        /// </summary>
+        /// <param name="gameObject"></param>
+        /// <param name="amount"></param>
+        /// <param name="time"></param>
+        public static TweenDetail AnimRotationAdd(GameObject gameObject, Vector3 amount, float time)
         {
-            return RotateTo(gameObject, gameObject.transform.eulerAngles + amount, time);
+            return AnimRotation(gameObject, gameObject.transform.eulerAngles + amount, time);
         }
         
-        public static TweenDetail RotateFrom(GameObject gameObject, Vector3 from, float time)
+        /// <summary>
+        /// Rotates the specified object.
+        /// </summary>
+        /// <param name="gameObject"></param>
+        /// <param name="from"></param>
+        /// <param name="time"></param>
+        public static TweenDetail AnimRotationFrom(GameObject gameObject, Vector3 from, float time)
         {
             TweenDetail tween = new TweenDetail();
-            tween.reset();
+            tween.ResetTweenState();
             tween.trans = gameObject.transform;
             tween.from = from;
             tween.to = gameObject.transform.eulerAngles;
@@ -866,10 +1297,16 @@ namespace TechJuego.TileMatchMania.Utils
             return tween;
         }
 
-        public static TweenDetail ShakePosition(GameObject gameObject, Vector3 amount, float time)
+        /// <summary>
+        /// Applies a shake effect to the specified object.
+        /// </summary>
+        /// <param name="gameObject"></param>
+        /// <param name="amount"></param>
+        /// <param name="time"></param>
+        public static TweenDetail AnimShakePosition(GameObject gameObject, Vector3 amount, float time)
         {
             TweenDetail tween = new TweenDetail();
-            tween.reset();
+            tween.ResetTweenState();
             tween.trans = gameObject.transform;
             tween.from = gameObject.transform.position;
             tween.to = amount;
@@ -881,10 +1318,16 @@ namespace TechJuego.TileMatchMania.Utils
             return tween;
         }
 
-        public static TweenDetail ShakeScale(GameObject gameObject, Vector3 amount, float time)
+        /// <summary>
+        /// Applies a shake effect to the specified object.
+        /// </summary>
+        /// <param name="gameObject"></param>
+        /// <param name="amount"></param>
+        /// <param name="time"></param>
+        public static TweenDetail AnimShakeScale(GameObject gameObject, Vector3 amount, float time)
         {
             TweenDetail tween = new TweenDetail();
-            tween.reset();
+            tween.ResetTweenState();
             tween.trans = gameObject.transform;
             tween.from = gameObject.transform.localScale;
             tween.to = amount;
@@ -896,10 +1339,16 @@ namespace TechJuego.TileMatchMania.Utils
             return tween;
         }
 
-        public static TweenDetail ShakeRotation(GameObject gameObject, Vector3 amount, float time)
+        /// <summary>
+        /// Applies a shake effect to the specified object.
+        /// </summary>
+        /// <param name="gameObject"></param>
+        /// <param name="amount"></param>
+        /// <param name="time"></param>
+        public static TweenDetail AnimShakeRotation(GameObject gameObject, Vector3 amount, float time)
         {
             TweenDetail tween = new TweenDetail();
-            tween.reset();
+            tween.ResetTweenState();
             tween.trans = gameObject.transform;
             tween.from = gameObject.transform.eulerAngles;
             tween.to = amount;
@@ -911,14 +1360,26 @@ namespace TechJuego.TileMatchMania.Utils
             return tween;
         }
 
-        public static TweenDetail FadeTo(GameObject gameObject, float alpha, float time)
+        /// <summary>
+        /// Fades the specified object.
+        /// </summary>
+        /// <param name="gameObject"></param>
+        /// <param name="alpha"></param>
+        /// <param name="time"></param>
+        public static TweenDetail AnimAlpha(GameObject gameObject, float alpha, float time)
         {
-            return FadeObject(gameObject, alpha, time);
+            return AnimMaterialAlpha(gameObject, alpha, time);
         }
 
-        public static TweenDetail FadeFrom(GameObject gameObject, float alpha, float time)
+        /// <summary>
+        /// Fades the specified object.
+        /// </summary>
+        /// <param name="gameObject"></param>
+        /// <param name="alpha"></param>
+        /// <param name="time"></param>
+        public static TweenDetail AnimAlphaFrom(GameObject gameObject, float alpha, float time)
         {
-            TweenDetail tween = FadeObject(gameObject, 1f, time);
+            TweenDetail tween = AnimMaterialAlpha(gameObject, 1f, time);
             if (tween != null)
             {
                 tween.from = new Vector3(alpha, 0, 0);
@@ -926,10 +1387,16 @@ namespace TechJuego.TileMatchMania.Utils
             return tween;
         }
 
-        public static TweenDetail ColorTo(GameObject gameObject, Color color, float time)
+        /// <summary>
+        /// Animates the color of the specified object.
+        /// </summary>
+        /// <param name="gameObject"></param>
+        /// <param name="color"></param>
+        /// <param name="time"></param>
+        public static TweenDetail AnimColor(GameObject gameObject, Color color, float time)
         {
             TweenDetail tween = new TweenDetail();
-            tween.reset();
+            tween.ResetTweenState();
             tween.trans = gameObject.transform;
             tween.colorTo = color;
             
@@ -959,9 +1426,15 @@ namespace TechJuego.TileMatchMania.Utils
             return tween;
         }
 
-        public static TweenDetail ColorFrom(GameObject gameObject, Color color, float time)
+        /// <summary>
+        /// Animates the color of the specified object.
+        /// </summary>
+        /// <param name="gameObject"></param>
+        /// <param name="color"></param>
+        /// <param name="time"></param>
+        public static TweenDetail AnimColorFrom(GameObject gameObject, Color color, float time)
         {
-            TweenDetail tween = ColorTo(gameObject, color, time);
+            TweenDetail tween = AnimColor(gameObject, color, time);
             if (tween != null)
             {
                 // Swap
@@ -972,10 +1445,16 @@ namespace TechJuego.TileMatchMania.Utils
             return tween;
         }
 
-        public static TweenDetail AudioTo(GameObject gameObject, float volume, float time)
+        /// <summary>
+        /// Animates the audio volume of the specified object.
+        /// </summary>
+        /// <param name="gameObject"></param>
+        /// <param name="volume"></param>
+        /// <param name="time"></param>
+        public static TweenDetail AnimAudioVolume(GameObject gameObject, float volume, float time)
         {
             TweenDetail tween = new TweenDetail();
-            tween.reset();
+            tween.ResetTweenState();
             if (gameObject.TryGetComponent(out AudioSource source))
             {
                 tween.audioSource = source;
@@ -991,9 +1470,15 @@ namespace TechJuego.TileMatchMania.Utils
             return null;
         }
 
-        public static TweenDetail AudioFrom(GameObject gameObject, float volume, float time)
+        /// <summary>
+        /// Animates the audio volume of the specified object.
+        /// </summary>
+        /// <param name="gameObject"></param>
+        /// <param name="volume"></param>
+        /// <param name="time"></param>
+        public static TweenDetail AnimAudioVolumeFrom(GameObject gameObject, float volume, float time)
         {
-            TweenDetail tween = AudioTo(gameObject, volume, time);
+            TweenDetail tween = AnimAudioVolume(gameObject, volume, time);
             if (tween != null)
             {
                 float temp = tween.floatTo;
@@ -1003,10 +1488,16 @@ namespace TechJuego.TileMatchMania.Utils
             return tween;
         }
 
-        public static TweenDetail LookTo(GameObject gameObject, Transform target, float time)
+        /// <summary>
+        /// Rotates the object to look at a target.
+        /// </summary>
+        /// <param name="gameObject"></param>
+        /// <param name="target"></param>
+        /// <param name="time"></param>
+        public static TweenDetail AnimLookAt(GameObject gameObject, Transform target, float time)
         {
             TweenDetail tween = new TweenDetail();
-            tween.reset();
+            tween.ResetTweenState();
             tween.trans = gameObject.transform;
             tween.from = gameObject.transform.eulerAngles;
             tween.lookTarget = target;
@@ -1018,10 +1509,16 @@ namespace TechJuego.TileMatchMania.Utils
             return tween;
         }
         
-        public static TweenDetail LookTo(GameObject gameObject, Vector3 targetPos, float time)
+        /// <summary>
+        /// Rotates the object to look at a target.
+        /// </summary>
+        /// <param name="gameObject"></param>
+        /// <param name="targetPos"></param>
+        /// <param name="time"></param>
+        public static TweenDetail AnimLookAt(GameObject gameObject, Vector3 targetPos, float time)
         {
             TweenDetail tween = new TweenDetail();
-            tween.reset();
+            tween.ResetTweenState();
             tween.trans = gameObject.transform;
             tween.from = gameObject.transform.eulerAngles;
             Vector3 direction = targetPos - gameObject.transform.position;
@@ -1034,17 +1531,29 @@ namespace TechJuego.TileMatchMania.Utils
             return tween;
         }
 
-        public static TweenDetail LookFrom(GameObject gameObject, Transform target, float time)
+        /// <summary>
+        /// Rotates the object to look at a target.
+        /// </summary>
+        /// <param name="gameObject"></param>
+        /// <param name="target"></param>
+        /// <param name="time"></param>
+        public static TweenDetail AnimLookFrom(GameObject gameObject, Transform target, float time)
         {
             Vector3 dir = target.position - gameObject.transform.position;
             Vector3 targetRot = Quaternion.LookRotation(dir).eulerAngles;
-            return RotateFrom(gameObject, targetRot, time);
+            return AnimRotationFrom(gameObject, targetRot, time);
         }
 
-        public static TweenDetail PunchRotation(GameObject gameObject, Vector3 amount, float time)
+        /// <summary>
+        /// Applies a punch effect to the specified object.
+        /// </summary>
+        /// <param name="gameObject"></param>
+        /// <param name="amount"></param>
+        /// <param name="time"></param>
+        public static TweenDetail AnimPunchRotation(GameObject gameObject, Vector3 amount, float time)
         {
             TweenDetail tween = new TweenDetail();
-            tween.reset();
+            tween.ResetTweenState();
             tween.trans = gameObject.transform;
             tween.from = gameObject.transform.eulerAngles;
             tween.to = amount;
@@ -1056,10 +1565,16 @@ namespace TechJuego.TileMatchMania.Utils
             return tween;
         }
 
-        public static TweenDetail PunchRotationLocal(GameObject gameObject, Vector3 amount, float time)
+        /// <summary>
+        /// Applies a punch effect to the specified object.
+        /// </summary>
+        /// <param name="gameObject"></param>
+        /// <param name="amount"></param>
+        /// <param name="time"></param>
+        public static TweenDetail AnimPunchLocalRotation(GameObject gameObject, Vector3 amount, float time)
         {
             TweenDetail tween = new TweenDetail();
-            tween.reset();
+            tween.ResetTweenState();
             tween.trans = gameObject.transform;
             tween.from = gameObject.transform.localEulerAngles;
             tween.to = amount;
@@ -1070,10 +1585,17 @@ namespace TechJuego.TileMatchMania.Utils
             tween.StartTween();
             return tween;
         }
-        public static TweenDetail ValueTo(GameObject gameObject, float start, float to, float time)
+        /// <summary>
+        /// Animates a value from start to end.
+        /// </summary>
+        /// <param name="gameObject"></param>
+        /// <param name="start"></param>
+        /// <param name="to"></param>
+        /// <param name="time"></param>
+        public static TweenDetail AnimFloat(GameObject gameObject, float start, float to, float time)
         {
             TweenDetail tween = new TweenDetail();
-            tween.reset();
+            tween.ResetTweenState();
             tween.trans = gameObject.transform;
             tween.from = new Vector3(start, 0, 0);
             tween.to = new Vector3(to, 0, 0);
@@ -1084,10 +1606,17 @@ namespace TechJuego.TileMatchMania.Utils
             tween.StartTween();
             return tween;
         }
-        public static TweenDetail ValueTo(GameObject gameObject, int start, int to, float time)
+        /// <summary>
+        /// Animates a value from start to end.
+        /// </summary>
+        /// <param name="gameObject"></param>
+        /// <param name="start"></param>
+        /// <param name="to"></param>
+        /// <param name="time"></param>
+        public static TweenDetail AnimFloat(GameObject gameObject, int start, int to, float time)
         {
             TweenDetail tween = new TweenDetail();
-            tween.reset();
+            tween.ResetTweenState();
             tween.trans = gameObject.transform;
             tween.from = new Vector3(start, 0, 0);
             tween.to = new Vector3(to, 0, 0);
@@ -1099,10 +1628,17 @@ namespace TechJuego.TileMatchMania.Utils
             return tween;
         }
 
-        public static TweenDetail ValueTo(MonoBehaviour mono, Vector2 start, Vector2 to, float time)
+        /// <summary>
+        /// Animates a value from start to end.
+        /// </summary>
+        /// <param name="mono"></param>
+        /// <param name="start"></param>
+        /// <param name="to"></param>
+        /// <param name="time"></param>
+        public static TweenDetail AnimFloat(MonoBehaviour mono, Vector2 start, Vector2 to, float time)
         {
             TweenDetail tween = new TweenDetail();
-            tween.reset();
+            tween.ResetTweenState();
             tween.trans = mono.transform;
             tween.from = start;
             tween.to = to;
@@ -1113,10 +1649,17 @@ namespace TechJuego.TileMatchMania.Utils
             tween.StartTween();
             return tween;
         }
-        public static TweenDetail ValueTo(MonoBehaviour mono, Vector3 start, Vector3 to, float time)
+        /// <summary>
+        /// Animates a value from start to end.
+        /// </summary>
+        /// <param name="mono"></param>
+        /// <param name="start"></param>
+        /// <param name="to"></param>
+        /// <param name="time"></param>
+        public static TweenDetail AnimFloat(MonoBehaviour mono, Vector3 start, Vector3 to, float time)
         {
             TweenDetail tween = new TweenDetail();
-            tween.reset();
+            tween.ResetTweenState();
             tween.trans = mono.transform;
             tween.from = start;
             tween.to = to;
@@ -1127,14 +1670,25 @@ namespace TechJuego.TileMatchMania.Utils
             tween.StartTween();
             return tween;
         }
+        /// <summary>
+        /// Sets the specified property.
+        /// </summary>
+        /// <param name="rect"></param>
+        /// <param name="position"></param>
         public static void SetPosition(RectTransform rect, Vector2 position)
         {
             rect.anchoredPosition = position;
         }
-        public static TweenDetail MoveFrom(RectTransform rect, Vector3 from, float time)
+        /// <summary>
+        /// Moves the specified object.
+        /// </summary>
+        /// <param name="rect"></param>
+        /// <param name="from"></param>
+        /// <param name="time"></param>
+        public static TweenDetail AnimPositionFrom(RectTransform rect, Vector3 from, float time)
         {
             TweenDetail tween = new TweenDetail();
-            tween.reset();
+            tween.ResetTweenState();
             tween.rectTrans = rect;
             tween.from = from;
             tween.to = rect.position;
@@ -1145,10 +1699,16 @@ namespace TechJuego.TileMatchMania.Utils
             tween.StartTween();
             return tween;
         }
-        public static TweenDetail MoveFrom(GameObject gameObject, Vector3 from, float time)
+        /// <summary>
+        /// Moves the specified object.
+        /// </summary>
+        /// <param name="gameObject"></param>
+        /// <param name="from"></param>
+        /// <param name="time"></param>
+        public static TweenDetail AnimPositionFrom(GameObject gameObject, Vector3 from, float time)
         {
             TweenDetail tween = new TweenDetail();
-            tween.reset();
+            tween.ResetTweenState();
             tween.trans = gameObject.transform;
             tween.from = from;
             tween.to = gameObject.transform.position;
@@ -1159,10 +1719,16 @@ namespace TechJuego.TileMatchMania.Utils
             tween.StartTween();
             return tween;
         }
-        public static TweenDetail CanvasAlpha(CanvasGroup group, float to, float time)
+        /// <summary>
+        /// Executes the C an va sA lp ha operation.
+        /// </summary>
+        /// <param name="group"></param>
+        /// <param name="to"></param>
+        /// <param name="time"></param>
+        public static TweenDetail AnimCanvasGroupAlpha(CanvasGroup group, float to, float time)
         {
             TweenDetail tween = new TweenDetail();
-            tween.reset();
+            tween.ResetTweenState();
             tween.canvasGroup = group;
             tween.from = new Vector3(group.alpha, 0, 0);
             tween.to = new Vector3(to, 0, 0);
@@ -1173,10 +1739,16 @@ namespace TechJuego.TileMatchMania.Utils
             tween.StartTween();
             return tween;
         }
-        public static TweenDetail SpriteRendererAlpha(SpriteRenderer sprite, float to, float time)
+        /// <summary>
+        /// Executes the S pr it eR en de re rA lp ha operation.
+        /// </summary>
+        /// <param name="sprite"></param>
+        /// <param name="to"></param>
+        /// <param name="time"></param>
+        public static TweenDetail AnimSpriteAlpha(SpriteRenderer sprite, float to, float time)
         {
             TweenDetail tween = new TweenDetail();
-            tween.reset();
+            tween.ResetTweenState();
             tween.spriteRenderer = sprite;
             tween.from = new Vector3(sprite.color.a, 0, 0);
             tween.to = new Vector3(to, 0, 0);
@@ -1187,10 +1759,17 @@ namespace TechJuego.TileMatchMania.Utils
             tween.StartTween();
             return tween;
         }
-        public static TweenDetail FaceUI(GameObject gameObject, int start, int to, float time)
+        /// <summary>
+        /// Executes the F ac eU I operation.
+        /// </summary>
+        /// <param name="gameObject"></param>
+        /// <param name="start"></param>
+        /// <param name="to"></param>
+        /// <param name="time"></param>
+        public static TweenDetail AnimCanvasAlpha(GameObject gameObject, int start, int to, float time)
         {
             TweenDetail tween = new TweenDetail();
-            tween.reset();
+            tween.ResetTweenState();
             tween.trans = gameObject.transform;
             tween.from = new Vector3(start, 0, 0);
             tween.to = new Vector3(to, 0, 0);
@@ -1211,25 +1790,37 @@ namespace TechJuego.TileMatchMania.Utils
             return tween;
         }
 
-        public static TweenDetail FadeSprite(GameObject gameObject, float to, float time)
+        /// <summary>
+        /// Fades the specified object.
+        /// </summary>
+        /// <param name="gameObject"></param>
+        /// <param name="to"></param>
+        /// <param name="time"></param>
+        public static TweenDetail AnimSpriteFade(GameObject gameObject, float to, float time)
         {
             if (gameObject.TryGetComponent(out SpriteRenderer spriteRenderer))
             {
-                return SpriteRendererAlpha(spriteRenderer, to, time);
+                return AnimSpriteAlpha(spriteRenderer, to, time);
             }
             return null;
         }
 
-        public static TweenDetail FadeObject(GameObject gameObject, float to, float time)
+        /// <summary>
+        /// Fades the specified object.
+        /// </summary>
+        /// <param name="gameObject"></param>
+        /// <param name="to"></param>
+        /// <param name="time"></param>
+        public static TweenDetail AnimMaterialAlpha(GameObject gameObject, float to, float time)
         {
             if (gameObject == null) return null;
             if (gameObject.TryGetComponent(out SpriteRenderer spriteRenderer))
             {
-                return SpriteRendererAlpha(spriteRenderer, to, time);
+                return AnimSpriteAlpha(spriteRenderer, to, time);
             }
 
             TweenDetail tween = new TweenDetail();
-            tween.reset();
+            tween.ResetTweenState();
             tween.trans = gameObject.transform;
             if (gameObject.TryGetComponent(out Renderer renderer))
             {
@@ -1273,6 +1864,351 @@ namespace TechJuego.TileMatchMania.Utils
             tween.techTween = gameObject.AddComponent<TechTween>();
             tween.techTween.tweenDetail = tween;
             tween.StartTween();
+            return tween;
+        }
+
+        /// <summary>
+        /// Pauses all tweens on the specified GameObject.
+        /// </summary>
+        /// <param name="gameObject"></param>
+        public static void PauseTweens(GameObject gameObject)
+        {
+            if (gameObject == null) return;
+            TechTween[] techTweens = gameObject.GetComponentsInChildren<TechTween>();
+            for (int i = 0; i < techTweens.Length; i++)
+            {
+                if (techTweens[i] != null && techTweens[i].tweenDetail != null)
+                {
+                    techTweens[i].tweenDetail.PauseTween();
+                }
+            }
+        }
+
+        /// <summary>
+        /// Resumes all tweens on the specified GameObject.
+        /// </summary>
+        /// <param name="gameObject"></param>
+        public static void ResumeTweens(GameObject gameObject)
+        {
+            if (gameObject == null) return;
+            TechTween[] techTweens = gameObject.GetComponentsInChildren<TechTween>();
+            for (int i = 0; i < techTweens.Length; i++)
+            {
+                if (techTweens[i] != null && techTweens[i].tweenDetail != null)
+                {
+                    techTweens[i].tweenDetail.ResumeTween();
+                }
+            }
+        }
+
+        /// <summary>
+        /// Counts the number of active tweens on the specified GameObject.
+        /// </summary>
+        /// <param name="gameObject"></param>
+        /// <returns>Returns the number of active tweens.</returns>
+        public static int GetTweenCount(GameObject gameObject)
+        {
+            if (gameObject == null) return 0;
+            return gameObject.GetComponentsInChildren<TechTween>().Length;
+        }
+
+        /// <summary>
+        /// Counts all active tweens in the scene.
+        /// </summary>
+        /// <returns>Returns the total number of active tweens.</returns>
+        public static int GetTweenCount()
+        {
+            return FindObjectsOfType<TechTween>().Length;
+        }
+
+        /// <summary>
+        /// Rotates the specified object by a percentage of 360 degrees over time.
+        /// </summary>
+        /// <param name="gameObject"></param>
+        /// <param name="amount"></param>
+        /// <param name="time"></param>
+        /// <returns>Returns the tween detail.</returns>
+        public static TweenDetail AnimRotationBy(GameObject gameObject, Vector3 amount, float time)
+        {
+            return AnimRotationAdd(gameObject, amount * 360f, time);
+        }
+
+        /// <summary>
+        /// Plays an AudioClip on the GameObject with an optional delay.
+        /// </summary>
+        /// <param name="gameObject"></param>
+        /// <param name="audioclip"></param>
+        /// <param name="delay"></param>
+        public static void PlayAudioDelayed(GameObject gameObject, AudioClip audioclip, float delay)
+        {
+            if (gameObject == null || audioclip == null) return;
+            CallInSec(gameObject, 1, () => {
+                if (gameObject != null)
+                {
+                    AudioSource source = gameObject.AddComponent<AudioSource>();
+                    source.clip = audioclip;
+                    source.Play();
+                    Destroy(source, audioclip.length);
+                }
+            }).SetDelay(delay);
+        }
+
+        /// <summary>
+        /// Puts a GameObject on a path at the provided percentage.
+        /// </summary>
+        /// <param name="gameObject"></param>
+        /// <param name="path"></param>
+        /// <param name="percent"></param>
+        public static void SnapToPath(GameObject gameObject, Vector3[] path, float percent)
+        {
+            if (gameObject == null || path == null || path.Length == 0) return;
+            percent = Mathf.Clamp01(percent);
+            float totalProgress = percent * path.Length;
+            int currentIndex = Mathf.FloorToInt(totalProgress);
+            if (currentIndex >= path.Length) 
+            {
+                currentIndex = path.Length - 1;
+                totalProgress = path.Length;
+            }
+            float segmentProgress = totalProgress - currentIndex;
+            Vector3 startPos = currentIndex == 0 ? path[0] : path[currentIndex - 1];
+            Vector3 endPos = path[currentIndex];
+            gameObject.transform.position = Vector3.Lerp(startPos, endPos, segmentProgress);
+        }
+
+        /// <summary>
+        /// Checks if the specified GameObject is currently tweening.
+        /// </summary>
+        /// <param name="gameObject"></param>
+        /// <returns>True if the object has active tweens.</returns>
+        public static bool HasActiveTweens(GameObject gameObject)
+        {
+            if (gameObject == null) return false;
+            return gameObject.GetComponentsInChildren<TechTween>().Length > 0;
+        }
+
+        /// <summary>
+        /// Cancels all active tweens in the scene.
+        /// </summary>
+        public static void ClearAllTweens()
+        {
+            TechTween[] allTweens = FindObjectsOfType<TechTween>();
+            for (int i = 0; i < allTweens.Length; i++)
+            {
+                if (allTweens[i] != null) Destroy(allTweens[i]);
+            }
+        }
+
+        /// <summary>
+        /// Moves a GameObject along the X-axis over time.
+        /// </summary>
+        /// <param name="gameObject"></param>
+        /// <param name="to"></param>
+        /// <param name="time"></param>
+        /// <returns>Returns the tween detail or operation result.</returns>
+        public static TweenDetail AnimPositionX(GameObject gameObject, float to, float time)
+        {
+            if (gameObject == null) return null;
+            TweenDetail tween = AnimFloat(gameObject, gameObject.transform.position.x, to, time);
+            tween.SetOnUpdateFloat((val) => {
+                if (gameObject != null) {
+                    Vector3 pos = gameObject.transform.position;
+                    pos.x = val;
+                    gameObject.transform.position = pos;
+                }
+            });
+            return tween;
+        }
+
+        /// <summary>
+        /// Moves a GameObject along the Y-axis over time.
+        /// </summary>
+        /// <param name="gameObject"></param>
+        /// <param name="to"></param>
+        /// <param name="time"></param>
+        /// <returns>Returns the tween detail or operation result.</returns>
+        public static TweenDetail AnimPositionY(GameObject gameObject, float to, float time)
+        {
+            if (gameObject == null) return null;
+            TweenDetail tween = AnimFloat(gameObject, gameObject.transform.position.y, to, time);
+            tween.SetOnUpdateFloat((val) => {
+                if (gameObject != null) {
+                    Vector3 pos = gameObject.transform.position;
+                    pos.y = val;
+                    gameObject.transform.position = pos;
+                }
+            });
+            return tween;
+        }
+
+        /// <summary>
+        /// Moves a GameObject along the Z-axis over time.
+        /// </summary>
+        /// <param name="gameObject"></param>
+        /// <param name="to"></param>
+        /// <param name="time"></param>
+        /// <returns>Returns the tween detail or operation result.</returns>
+        public static TweenDetail AnimPositionZ(GameObject gameObject, float to, float time)
+        {
+            if (gameObject == null) return null;
+            TweenDetail tween = AnimFloat(gameObject, gameObject.transform.position.z, to, time);
+            tween.SetOnUpdateFloat((val) => {
+                if (gameObject != null) {
+                    Vector3 pos = gameObject.transform.position;
+                    pos.z = val;
+                    gameObject.transform.position = pos;
+                }
+            });
+            return tween;
+        }
+
+        /// <summary>
+        /// Moves a GameObject locally along the X-axis over time.
+        /// </summary>
+        /// <param name="gameObject"></param>
+        /// <param name="to"></param>
+        /// <param name="time"></param>
+        /// <returns>Returns the tween detail or operation result.</returns>
+        public static TweenDetail AnimLocalPositionX(GameObject gameObject, float to, float time)
+        {
+            if (gameObject == null) return null;
+            TweenDetail tween = AnimFloat(gameObject, gameObject.transform.localPosition.x, to, time);
+            tween.SetOnUpdateFloat((val) => {
+                if (gameObject != null) {
+                    Vector3 pos = gameObject.transform.localPosition;
+                    pos.x = val;
+                    gameObject.transform.localPosition = pos;
+                }
+            });
+            return tween;
+        }
+
+        /// <summary>
+        /// Moves a GameObject locally along the Y-axis over time.
+        /// </summary>
+        /// <param name="gameObject"></param>
+        /// <param name="to"></param>
+        /// <param name="time"></param>
+        /// <returns>Returns the tween detail or operation result.</returns>
+        public static TweenDetail AnimLocalPositionY(GameObject gameObject, float to, float time)
+        {
+            if (gameObject == null) return null;
+            TweenDetail tween = AnimFloat(gameObject, gameObject.transform.localPosition.y, to, time);
+            tween.SetOnUpdateFloat((val) => {
+                if (gameObject != null) {
+                    Vector3 pos = gameObject.transform.localPosition;
+                    pos.y = val;
+                    gameObject.transform.localPosition = pos;
+                }
+            });
+            return tween;
+        }
+
+        /// <summary>
+        /// Moves a GameObject locally along the Z-axis over time.
+        /// </summary>
+        /// <param name="gameObject"></param>
+        /// <param name="to"></param>
+        /// <param name="time"></param>
+        /// <returns>Returns the tween detail or operation result.</returns>
+        public static TweenDetail AnimLocalPositionZ(GameObject gameObject, float to, float time)
+        {
+            if (gameObject == null) return null;
+            TweenDetail tween = AnimFloat(gameObject, gameObject.transform.localPosition.z, to, time);
+            tween.SetOnUpdateFloat((val) => {
+                if (gameObject != null) {
+                    Vector3 pos = gameObject.transform.localPosition;
+                    pos.z = val;
+                    gameObject.transform.localPosition = pos;
+                }
+            });
+            return tween;
+        }
+
+        /// <summary>
+        /// Scales a GameObject along the X-axis over time.
+        /// </summary>
+        /// <param name="gameObject"></param>
+        /// <param name="to"></param>
+        /// <param name="time"></param>
+        /// <returns>Returns the tween detail or operation result.</returns>
+        public static TweenDetail AnimScaleX(GameObject gameObject, float to, float time)
+        {
+            if (gameObject == null) return null;
+            TweenDetail tween = AnimFloat(gameObject, gameObject.transform.localScale.x, to, time);
+            tween.SetOnUpdateFloat((val) => {
+                if (gameObject != null) {
+                    Vector3 scale = gameObject.transform.localScale;
+                    scale.x = val;
+                    gameObject.transform.localScale = scale;
+                }
+            });
+            return tween;
+        }
+
+        /// <summary>
+        /// Scales a GameObject along the Y-axis over time.
+        /// </summary>
+        /// <param name="gameObject"></param>
+        /// <param name="to"></param>
+        /// <param name="time"></param>
+        /// <returns>Returns the tween detail or operation result.</returns>
+        public static TweenDetail AnimScaleY(GameObject gameObject, float to, float time)
+        {
+            if (gameObject == null) return null;
+            TweenDetail tween = AnimFloat(gameObject, gameObject.transform.localScale.y, to, time);
+            tween.SetOnUpdateFloat((val) => {
+                if (gameObject != null) {
+                    Vector3 scale = gameObject.transform.localScale;
+                    scale.y = val;
+                    gameObject.transform.localScale = scale;
+                }
+            });
+            return tween;
+        }
+
+        /// <summary>
+        /// Scales a GameObject along the Z-axis over time.
+        /// </summary>
+        /// <param name="gameObject"></param>
+        /// <param name="to"></param>
+        /// <param name="time"></param>
+        /// <returns>Returns the tween detail or operation result.</returns>
+        public static TweenDetail AnimScaleZ(GameObject gameObject, float to, float time)
+        {
+            if (gameObject == null) return null;
+            TweenDetail tween = AnimFloat(gameObject, gameObject.transform.localScale.z, to, time);
+            tween.SetOnUpdateFloat((val) => {
+                if (gameObject != null) {
+                    Vector3 scale = gameObject.transform.localScale;
+                    scale.z = val;
+                    gameObject.transform.localScale = scale;
+                }
+            });
+            return tween;
+        }
+
+        /// <summary>
+        /// Rotates a GameObject around a specific point and axis over time.
+        /// </summary>
+        /// <param name="gameObject"></param>
+        /// <param name="point"></param>
+        /// <param name="axis"></param>
+        /// <param name="addAngle"></param>
+        /// <param name="time"></param>
+        /// <returns>Returns the tween detail or operation result.</returns>
+        public static TweenDetail AnimOrbit(GameObject gameObject, Vector3 point, Vector3 axis, float addAngle, float time)
+        {
+            if (gameObject == null) return null;
+            TweenDetail tween = AnimFloat(gameObject, 0f, addAngle, time);
+            float lastAngle = 0f;
+            tween.SetOnUpdateFloat((val) => {
+                if (gameObject != null) {
+                    float delta = val - lastAngle;
+                    gameObject.transform.RotateAround(point, axis, delta);
+                    lastAngle = val;
+                }
+            });
             return tween;
         }
 
@@ -1330,20 +2266,48 @@ namespace TechJuego.TileMatchMania.Utils
         public Transform lookTarget;
 
         public TweenDetail() { }
-        public void CancleTween()
+        
+        public bool showGizmoPath = false;
+        public Color gizmoPathColor = Color.white;
+        
+        /// <summary>
+        /// Shows the movement path using Gizmos.
+        /// </summary>
+        /// <param name="color">The color of the path.</param>
+        public TweenDetail ShowMovementPath(Color color = default)
+        {
+            if (color == default) color = Color.white;
+            showGizmoPath = true;
+            gizmoPathColor = color;
+            return this;
+        }
+
+        /// <summary>
+        /// Cancels the animation.
+        /// </summary>
+        public void CancelTween()
         {
             GameObject.Destroy(techTween);
         }
-        public void Pause()
+        /// <summary>
+        /// Pauses the animation.
+        /// </summary>
+        public void PauseTween()
         {
             pauseTime = Time.time;
         }
-        public void Resume()
+        /// <summary>
+        /// Resumes the animation.
+        /// </summary>
+        public void ResumeTween()
         {
             float timePaused = Time.time - pauseTime;
             startTime += timePaused;
         }
-        public void reset()
+        /// <summary>
+        /// Resets the tween details.
+        /// </summary>
+        public void ResetTweenState()
         {
             isLooping = false;
             repeat = 1;
@@ -1352,13 +2316,19 @@ namespace TechJuego.TileMatchMania.Utils
             from = to = Vector3.zero;
             isPingPong = false;
             isReversing = false;
-            tweenUpdates.Reset();
+            tweenUpdates.ResetTweenState();
         }
+        /// <summary>
+        /// Starts the animation.
+        /// </summary>
         public void StartAction()
         {
             time = 0f;
             operationType = OperationType.CallInSec;
         }
+        /// <summary>
+        /// Starts the animation.
+        /// </summary>
         public void StartJump()
         {
             startTime = Time.time + delay;
@@ -1366,6 +2336,9 @@ namespace TechJuego.TileMatchMania.Utils
             tweenUpdates.OnTweenStart?.Invoke();
             isJumping = true;
         }
+        /// <summary>
+        /// Starts the animation.
+        /// </summary>
         public void StartTween()
         {
             startTime = Time.time + delay;
@@ -1373,6 +2346,9 @@ namespace TechJuego.TileMatchMania.Utils
             tweenUpdates.OnTweenStart?.Invoke();
             isRunning = true;
         }
+        /// <summary>
+        /// Executes the C on ti nu eU pd at eT we en operation.
+        /// </summary>
         public void ContinueUpdateTween()
         {
             if (!isRunning) return;
@@ -1393,6 +2369,9 @@ namespace TechJuego.TileMatchMania.Utils
             }
         }
         public float progress;
+        /// <summary>
+        /// Executes the U pd at eT we en operation.
+        /// </summary>
         public void UpdateTween()
         {
             switch (operationType)
@@ -1493,7 +2472,10 @@ namespace TechJuego.TileMatchMania.Utils
             }
         }
         private Vector3 startValue;
-        public void StartTrignometroc()
+        /// <summary>
+        /// Starts the animation.
+        /// </summary>
+        public void StartTrigonometric()
         {
             startTime = Time.time + delay;
             switch (tweenType)
@@ -1537,7 +2519,10 @@ namespace TechJuego.TileMatchMania.Utils
             }
             isRunning = true;
         }
-        public void UpdateTrignometric()
+        /// <summary>
+        /// Executes the U pd at eT ri gn om et ri c operation.
+        /// </summary>
+        public void UpdateTrigonometric()
         {
 
             if (!isRunning) return;
@@ -1613,6 +2598,9 @@ namespace TechJuego.TileMatchMania.Utils
 
             }
         }
+        /// <summary>
+        /// Executes the R un Tw ee n operation.
+        /// </summary>
         public IEnumerator RunTween()
         {
             yield return new WaitForSeconds(delay);
@@ -1642,7 +2630,10 @@ namespace TechJuego.TileMatchMania.Utils
                 GameObject.Destroy(techTween);
             }
         }
-        public IEnumerator TrignometricObject()
+        /// <summary>
+        /// Applies a trigonometric animation.
+        /// </summary>
+        public IEnumerator AnimTrigObject()
         {
             Vector3 startValue = Vector3.zero;
             switch (tweenType)
@@ -1761,6 +2752,11 @@ namespace TechJuego.TileMatchMania.Utils
             }
         }
 
+        /// <summary>
+        /// Sets the specified property.
+        /// </summary>
+        /// <param name="valu"></param>
+        /// <param name="isDone"></param>
         public void SetValues(float valu,bool isDone)
         {
             // Determine the direction of the tween based on ping-pong
@@ -1985,9 +2981,9 @@ namespace TechJuego.TileMatchMania.Utils
                     }
                     break;
                 case TweenType.Rotate:
-                    float xNextRot = closestRot(start.x, end.x);
-                    float yNextRot = closestRot(start.y, end.y);
-                    float zNextRot = closestRot(start.z, end.z);
+                    float xNextRot = GetClosestRotation(start.x, end.x);
+                    float yNextRot = GetClosestRotation(start.y, end.y);
+                    float zNextRot = GetClosestRotation(start.z, end.z);
                     if (trans != null)
                     {
                         trans.transform.eulerAngles = Vector3.Lerp(start, new Vector3(xNextRot, yNextRot, zNextRot), valu);
@@ -2241,7 +3237,12 @@ namespace TechJuego.TileMatchMania.Utils
             else
                 return 7.5625f * (t -= (2.625f / 2.75f)) * t + 0.984375f;
         }
-        public float closestRot(float from, float to)
+        /// <summary>
+        /// Executes the c lo se st Ro t operation.
+        /// </summary>
+        /// <param name="from"></param>
+        /// <param name="to"></param>
+        public float GetClosestRotation(float from, float to)
         {
             float minusWhole = 0 - (360 - to);
             float plusWhole = 360 + to;
@@ -2264,11 +3265,19 @@ namespace TechJuego.TileMatchMania.Utils
                 }
             }
         }
+        /// <summary>
+        /// Sets the specified property.
+        /// </summary>
+        /// <param name="_easeTween"></param>
         public TweenDetail SetEaseType(EaseTween _easeTween)
         {
             easeTween = _easeTween;
             return this;
         }
+        /// <summary>
+        /// Sets the specified property.
+        /// </summary>
+        /// <param name="_delay"></param>
         public TweenDetail SetDelay(float _delay)
         {
             float oldDelay = delay;
@@ -2276,6 +3285,9 @@ namespace TechJuego.TileMatchMania.Utils
             startTime += (delay - oldDelay);
             return this;
         }
+        /// <summary>
+        /// Sets the specified property.
+        /// </summary>
         public TweenDetail SetLocal()
         {
             isLocal = true;
@@ -2314,46 +3326,82 @@ namespace TechJuego.TileMatchMania.Utils
             }
             return this;
         }
+        /// <summary>
+        /// Sets the specified property.
+        /// </summary>
+        /// <param name="onComplete"></param>
         public TweenDetail SetOnTweenStart(Action onComplete)
         {
             tweenUpdates.OnTweenStart = onComplete;
             return this;
         }
-        public TweenDetail GetCompleteCallback(Action onComplete)
+        /// <summary>
+        /// Gets or configures the callback for the tween.
+        /// </summary>
+        /// <param name="onComplete"></param>
+        public TweenDetail SetOnComplete(Action onComplete)
         {
             tweenUpdates.OnTweenComplete = onComplete;
             return this;
         }
-        public TweenDetail GetVector3Update(Action<Vector3> onUpdate)
+        /// <summary>
+        /// Gets or configures the callback for the tween.
+        /// </summary>
+        /// <param name="onUpdate"></param>
+        public TweenDetail SetOnUpdateVector3(Action<Vector3> onUpdate)
         {
             tweenUpdates.onUpdateVector3 = onUpdate;
             return this;
         }
-        public TweenDetail GetValueUpdate(Action<float> onUpdate)
+        /// <summary>
+        /// Gets or configures the callback for the tween.
+        /// </summary>
+        /// <param name="onUpdate"></param>
+        public TweenDetail SetOnUpdateFloat(Action<float> onUpdate)
         {
             tweenUpdates.onUpdateValue = onUpdate;
             return this;
         }
-        public TweenDetail GetValueIntUpdate(Action<int> onUpdate)
+        /// <summary>
+        /// Gets or configures the callback for the tween.
+        /// </summary>
+        /// <param name="onUpdate"></param>
+        public TweenDetail SetOnUpdateInt(Action<int> onUpdate)
         {
             tweenUpdates.onUpdateIntValue = onUpdate;
             return this;
         }
-        public TweenDetail GetVector2Update(Action<Vector2> onUpdate)
+        /// <summary>
+        /// Gets or configures the callback for the tween.
+        /// </summary>
+        /// <param name="onUpdate"></param>
+        public TweenDetail SetOnUpdateVector2(Action<Vector2> onUpdate)
         {
             tweenUpdates.onUpdateVector2 = onUpdate;
             return this;
         }
+        /// <summary>
+        /// Sets the specified property.
+        /// </summary>
+        /// <param name="count"></param>
         public TweenDetail SetLoopCount(int count)
         {
             repeat = count;
             return this;
         }
+        /// <summary>
+        /// Sets the specified property.
+        /// </summary>
+        /// <param name="loop"></param>
         public TweenDetail SetInfiniteLoop(bool loop)
         {
             isLooping = loop;
             return this;
         }
+        /// <summary>
+        /// Sets the specified property.
+        /// </summary>
+        /// <param name="pingPong"></param>
         public TweenDetail SetPingPong(bool pingPong)
         {
             isPingPong = pingPong;
@@ -2437,4 +3485,11 @@ namespace TechJuego.TileMatchMania.Utils
         }
     }
 }
+
+
+
+
+
+
+
 
