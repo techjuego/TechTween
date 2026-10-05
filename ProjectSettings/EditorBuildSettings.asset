@@ -12,6 +12,6 @@ EditorBuildSettings:
     path: Assets/TechJuego/DotDot/Scene/Menu.unity
     guid: 7c26277bf0213b94bac358a32f24e60d
   - enabled: 1
-    path: Assets/TechJuego/DotDot/Scene/Example.unity
+    path: Assets/TechJuego/TechTween/Scene/Move.unity
     guid: d18d7174e37ed49d9890b58a9714ffa5
   m_configObjects: {}
