@@ -134,7 +134,7 @@ GameObject:
   - component: {fileID: 355536923}
   - component: {fileID: 355536922}
   - component: {fileID: 355536921}
-  - component: {fileID: 355536920}
+  - component: {fileID: 355536925}
   m_Layer: 0
   m_Name: TweenTarget
   m_TagString: Untagged
@@ -142,18 +142,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &355536920
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 355536919}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 92c92784d74a1c24b8c77603aa3cb34b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!23 &355536921
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -240,6 +228,21 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &355536925
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 355536919}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9e1f0622e2ca8be47a2aaf4750f0de23, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  endPosition: {x: 5, y: 0, z: 0}
+  arkValue: {x: 0, y: 5, z: 0}
+  time: 5
 --- !u!1 &492828733
 GameObject:
   m_ObjectHideFlags: 0

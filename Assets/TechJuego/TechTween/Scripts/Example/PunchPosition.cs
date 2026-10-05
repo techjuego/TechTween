@@ -5,6 +5,6 @@ public class PunchPosition : MonoBehaviour
 {
     private void OnEnable()
     {
-        TechTween.AnimPunchPosition(gameObject, new Vector3(1, 1, 0), 1f);
+        TechTween.AnimPunchPosition(gameObject, new Vector3(1, 1, 0), 1f).ShowMovementPath();
     }
 }

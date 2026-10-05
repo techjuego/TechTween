@@ -289,6 +289,14 @@ namespace TechJuego.Tween
             {
                 Gizmos.DrawLine(tweenDetail.from, tweenDetail.to);
             }
+            else if (tweenDetail.tweenType == TweenType.PunchPosition || tweenDetail.tweenType == TweenType.PunchPositionLocal || tweenDetail.tweenType == TweenType.ShakePosition)
+            {
+                Gizmos.DrawLine(tweenDetail.from, tweenDetail.from + tweenDetail.to);
+            }
+            else if (tweenDetail.tweenType == TweenType.TrigMove)
+            {
+                Gizmos.DrawLine(tweenDetail.from - tweenDetail.to, tweenDetail.from + tweenDetail.to);
+            }
             else if (tweenDetail.tweenType == TweenType.TrigMoveTransform && tweenDetail.transformFrom != null && tweenDetail.transformTo != null)
             {
                 Gizmos.DrawLine(tweenDetail.transformFrom.position, tweenDetail.transformTo.position);
